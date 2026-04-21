@@ -1,20 +1,23 @@
-const { open } = require('sqlite');
-const sqlite3  = require('sqlite3');
-const path     = require('path');
-const fs       = require('fs');
+import { open }         from 'sqlite'
+import sqlite3           from 'sqlite3'
+import path              from 'path'
+import fs                from 'fs'
+import { fileURLToPath } from 'url'
 
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const dataDir   = path.join(__dirname, '..', '..', 'data')
 
-let _db;
+let _db
 
-async function getDb() {
-  if (_db) return _db;
+export async function conectarBD() {
+  if (_db) return _db
+
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
 
   _db = await open({
     filename: path.join(dataDir, 'combustible.db'),
     driver:   sqlite3.Database,
-  });
+  })
 
   await _db.exec(`
     CREATE TABLE IF NOT EXISTS vehicles (
@@ -39,9 +42,9 @@ async function getDb() {
       costo_total      REAL,
       FOREIGN KEY (matricula) REFERENCES vehicles(matricula)
     );
-  `);
+  `)
 
-  const { c } = await _db.get('SELECT COUNT(*) AS c FROM vehicles');
+  const { c } = await _db.get('SELECT COUNT(*) AS c FROM vehicles')
   if (c === 0) {
     const seed = [
       ['SDE8297', 'Washington Bossi',        'OM2204', 'Nissan Frontier Diesel'],
@@ -56,16 +59,19 @@ async function getDb() {
       ['ABC7658', 'Jose Saus / Jesus Rivera', 'OM2404', 'Renault Oroch'],
       ['CBC4624', 'Sergio Cesaro',            'OM2404', 'Renault Oroch'],
       ['CBC4640', 'Manuel Martinez',          'OM2404', 'Renault Oroch'],
-    ];
+    ]
     for (const row of seed) {
       await _db.run(
         'INSERT OR IGNORE INTO vehicles (matricula, conductor, centro_costo, modelo) VALUES (?, ?, ?, ?)',
         row
-      );
+      )
     }
   }
 
-  return _db;
+  console.log('SQLite conectado ✓')
+  return _db
 }
 
-module.exports = { getDb };
+export async function getDb() {
+  return _db || conectarBD()
+}

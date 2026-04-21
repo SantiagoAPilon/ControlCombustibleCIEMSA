@@ -1,4 +1,4 @@
-const BASE = '/api';
+const BASE = '/v1';
 
 async function req(path, options = {}) {
   const res = await fetch(BASE + path, options);
