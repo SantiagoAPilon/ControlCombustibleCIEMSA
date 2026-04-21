@@ -1,67 +1,98 @@
-import { useState, useEffect } from 'react';
-import FuelForm  from './components/FuelForm';
-import FuelTable from './components/FuelTable';
-import FilterBar from './components/FilterBar';
-import { getVehicles, getFuelRecords, addFuelRecord, deleteFuelRecord } from './api/api';
-import './App.css';
+import { useState, useEffect } from 'react'
+import Login          from './components/Login'
+import FuelForm       from './components/FuelForm'
+import FuelTable      from './components/FuelTable'
+import FilterBar      from './components/FilterBar'
+import AdminVehicles  from './components/AdminVehicles'
+import {
+  login as apiLogin,
+  getVehicles,
+  getFuelRecords,
+  addFuelRecord,
+  deleteFuelRecord,
+} from './api/api'
+import './App.css'
 
-const now = new Date();
+const now = new Date()
 
 export default function App() {
-  const [activeTab, setActiveTab]   = useState('form');
-  const [vehicles,  setVehicles]    = useState([]);
-  const [records,   setRecords]     = useState([]);
-  const [loading,   setLoading]     = useState(false);
-  const [notify,    setNotify]      = useState(null);
-  const [filters,   setFilters]     = useState({
+  const [isAuth,    setIsAuth]    = useState(!!localStorage.getItem('token'))
+  const [activeTab, setActiveTab] = useState('form')
+  const [vehicles,  setVehicles]  = useState([])
+  const [records,   setRecords]   = useState([])
+  const [loading,   setLoading]   = useState(false)
+  const [notify,    setNotify]    = useState(null)
+  const [filters,   setFilters]   = useState({
     matricula: 'all',
     mes:  now.getMonth() + 1,
     anio: now.getFullYear(),
-  });
+  })
 
+  // Carga vehículos al autenticarse
   useEffect(() => {
-    getVehicles().then(setVehicles).catch(() => flash('Error al cargar vehículos', 'error'));
-  }, []);
+    if (!isAuth) return
+    loadVehicles()
+  }, [isAuth])
 
-  const { matricula, mes, anio } = filters;
+  const loadVehicles = () =>
+    getVehicles().then(setVehicles).catch(() => flash('Error al cargar vehículos', 'error'))
+
+  // Carga registros al cambiar filtros o tab
+  const { matricula, mes, anio } = filters
   useEffect(() => {
-    if (activeTab !== 'history') return;
-    setLoading(true);
+    if (!isAuth || activeTab !== 'history') return
+    setLoading(true)
     getFuelRecords({ matricula, mes, anio })
       .then(setRecords)
       .catch(() => flash('Error al cargar registros', 'error'))
-      .finally(() => setLoading(false));
-  }, [activeTab, matricula, mes, anio]);
+      .finally(() => setLoading(false))
+  }, [isAuth, activeTab, matricula, mes, anio])
 
   const flash = (message, type = 'success') => {
-    setNotify({ message, type });
-    setTimeout(() => setNotify(null), 3500);
-  };
+    setNotify({ message, type })
+    setTimeout(() => setNotify(null), 3500)
+  }
+
+  const handleLogin = async (credentials) => {
+    const data = await apiLogin(credentials)
+    localStorage.setItem('token', data.token)
+    setIsAuth(true)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    setIsAuth(false)
+    setActiveTab('form')
+    setVehicles([])
+    setRecords([])
+  }
 
   const handleSubmit = async (formData) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      await addFuelRecord(formData);
-      flash('Carga registrada correctamente');
-      setActiveTab('history');
+      await addFuelRecord(formData)
+      flash('Carga registrada correctamente')
+      setActiveTab('history')
     } catch (err) {
-      flash(err.message || 'Error al guardar la carga', 'error');
+      flash(err.message || 'Error al guardar la carga', 'error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar este registro?')) return;
+    if (!window.confirm('¿Eliminar este registro?')) return
     try {
-      await deleteFuelRecord(id);
-      const data = await getFuelRecords({ matricula, mes, anio });
-      setRecords(data);
-      flash('Registro eliminado');
+      await deleteFuelRecord(id)
+      const data = await getFuelRecords({ matricula, mes, anio })
+      setRecords(data)
+      flash('Registro eliminado')
     } catch (err) {
-      flash('Error al eliminar', 'error');
+      flash('Error al eliminar', 'error')
     }
-  };
+  }
+
+  if (!isAuth) return <Login onLogin={handleLogin} />
 
   return (
     <div className="app">
@@ -71,7 +102,10 @@ export default function App() {
             <span className="header-icon">⛽</span>
             <h1>Control de Combustible</h1>
           </div>
-          <span className="company-badge">CIEMSA</span>
+          <div className="header-right">
+            <span className="company-badge">CIEMSA</span>
+            <button className="btn-logout" onClick={handleLogout}>Cerrar sesión</button>
+          </div>
         </div>
       </header>
 
@@ -86,6 +120,9 @@ export default function App() {
         <button className={`tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
           Historial
         </button>
+        <button className={`tab ${activeTab === 'admin'   ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+          ⚙ Administración
+        </button>
       </nav>
 
       <main className="main-content">
@@ -98,7 +135,10 @@ export default function App() {
             <FuelTable records={records} loading={loading} onDelete={handleDelete} />
           </>
         )}
+        {activeTab === 'admin' && (
+          <AdminVehicles vehicles={vehicles} onRefresh={loadVehicles} />
+        )}
       </main>
     </div>
-  );
+  )
 }

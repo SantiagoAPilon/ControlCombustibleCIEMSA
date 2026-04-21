@@ -15,12 +15,20 @@
 .header-title { display: flex; align-items: center; gap: 10px; }
 .header-icon  { font-size: 22px; }
 .header-title h1 { font-size: 20px; font-weight: 700; letter-spacing: .3px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
 .company-badge {
   background: rgba(255,255,255,.18);
   border: 1px solid rgba(255,255,255,.35);
   padding: 4px 14px; border-radius: 5px;
   font-size: 15px; font-weight: 800; letter-spacing: 2px;
 }
+.btn-logout {
+  background: rgba(255,255,255,.12); color: #fff;
+  border: 1px solid rgba(255,255,255,.35);
+  padding: 5px 14px; border-radius: 5px;
+  font-size: 13px; font-weight: 600; transition: background .2s;
+}
+.btn-logout:hover { background: rgba(255,255,255,.25); }
 
 /* ── Notification ──────────────────────────────────────────── */
 .notification {
@@ -175,3 +183,64 @@
   box-shadow: 0 2px 12px rgba(0,0,0,.07);
 }
 .state-msg.empty::before { content: '📋  '; }
+
+/* ── Login ─────────────────────────────────────────────────── */
+.login-overlay {
+  min-height: 100vh; background: linear-gradient(135deg, #0d3b7a 0%, #1a5dbd 100%);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.login-card {
+  background: #fff; border-radius: 14px; padding: 40px 36px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25); width: 100%; max-width: 400px;
+}
+.login-brand {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; margin-bottom: 30px; text-align: center;
+}
+.login-icon { font-size: 36px; }
+.login-brand h1 { font-size: 20px; font-weight: 700; color: #0d3b7a; }
+.login-brand .company-badge {
+  background: #0d3b7a; border-color: #0d3b7a; color: #fff;
+}
+.login-form { display: flex; flex-direction: column; gap: 16px; }
+.login-error {
+  background: #fde8e8; color: #b71c1c; border: 1px solid #f5c6c6;
+  border-radius: 7px; padding: 10px 14px; font-size: 13px; font-weight: 500;
+}
+.login-btn { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
+
+/* ── Admin ─────────────────────────────────────────────────── */
+.admin-section { display: flex; flex-direction: column; gap: 20px; }
+.admin-title {
+  font-size: 18px; font-weight: 700; color: #0d3b7a;
+  padding-bottom: 10px; border-bottom: 2px solid #dde8fb;
+}
+.admin-cc-block { display: flex; flex-direction: column; gap: 8px; }
+.cc-label {
+  font-size: 13px; font-weight: 700; color: #8896a8;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.admin-form-card {
+  background: #fff; border-radius: 12px; padding: 26px 28px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+}
+.admin-form-card h3 {
+  font-size: 15px; font-weight: 700; color: #0d3b7a; margin-bottom: 18px;
+}
+.admin-actions { display: flex; gap: 12px; }
+.admin-alert {
+  padding: 11px 16px; border-radius: 7px; font-weight: 600; font-size: 13px;
+}
+.admin-alert.success { background: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+.admin-alert.error   { background: #fde8e8; color: #b71c1c; border: 1px solid #f5c6c6; }
+.btn-edit {
+  background: transparent; border: 1px solid #b3c6e0; color: #1a5dbd;
+  padding: 3px 9px; border-radius: 5px; font-size: 13px; transition: all .2s;
+}
+.btn-edit:hover { background: #1a5dbd; color: #fff; border-color: #1a5dbd; }
+.btn-secondary {
+  background: #f0f2f6; color: #2c3e50; border: 1px solid #d3daea;
+  padding: 12px 22px; border-radius: 7px; font-size: 14px; font-weight: 600; transition: background .2s;
+}
+.btn-secondary:hover { background: #dde3ed; }
+.row-editing { background: #e8f0fd !important; }
