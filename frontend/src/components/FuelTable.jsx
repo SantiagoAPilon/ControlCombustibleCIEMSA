@@ -23,8 +23,8 @@ const exportToExcel = (records) => {
     'Modelo':          r.modelo,
     'CC':              r.centro_costo,
     'Litros':          r.litros,
-    'KM Actual':       r.km_actual,
     'KM Anterior':     r.km_anterior ?? '',
+    'KM Actual':       r.km_actual ?? '',
     'KM Recorridos':   r.km_recorridos ?? '',
     'km/L':            r.consumo_km_l ?? '',
     'Tipo':            r.tipo_combustible ?? '',
@@ -94,8 +94,8 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
               <th>Modelo</th>
               <th>CC</th>
               <th className="r">Litros</th>
-              <th className="r">KM Actual</th>
               <th className="r">KM Ant.</th>
+              <th className="r">KM Actual</th>
               <th className="r">KM Recorr.</th>
               <th className="r">km/L</th>
               <th>Tipo</th>
@@ -114,8 +114,8 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
                 <td className="muted">{r.modelo}</td>
                 <td className="muted">{r.centro_costo}</td>
                 <td className="r">{fmtNum(r.litros)}</td>
-                <td className="r">{fmtKm(r.km_actual)}</td>
                 <td className="r muted">{fmtKm(r.km_anterior)}</td>
+                <td className="r">{fmtKm(r.km_actual)}</td>
                 <td className="r">{fmtKm(r.km_recorridos)}</td>
                 <td className={`r consumo ${consumoClass(r.consumo_km_l)}`}>
                   {r.consumo_km_l != null ? fmtNum(r.consumo_km_l) : '—'}
