@@ -1,48 +1,57 @@
-import { getDb } from '../config/db_config.js'
+import mongoose    from 'mongoose'
+import { FuelRecord } from './fuel.model.js'
+
+const vehicleSchema = new mongoose.Schema({
+  matricula:    { type: String, unique: true, required: true, uppercase: true, trim: true },
+  conductor:    String,
+  centro_costo: String,
+  modelo:       String,
+})
+
+export const Vehicle = mongoose.model('Vehicle', vehicleSchema)
+
+const toObj = (v) => ({
+  matricula:    v.matricula,
+  conductor:    v.conductor,
+  centro_costo: v.centro_costo,
+  modelo:       v.modelo,
+})
 
 export const findAll = async () => {
-  const db = await getDb()
-  return db.all('SELECT * FROM vehicles ORDER BY centro_costo, matricula')
+  const docs = await Vehicle.find().sort({ centro_costo: 1, matricula: 1 }).lean()
+  return docs.map(toObj)
 }
 
 export const create = async ({ matricula, conductor, centro_costo, modelo }) => {
-  const db  = await getDb()
   const mat = matricula.toUpperCase().trim()
   try {
-    await db.run(
-      'INSERT INTO vehicles (matricula, conductor, centro_costo, modelo) VALUES (?, ?, ?, ?)',
-      [mat, conductor, centro_costo, modelo]
-    )
+    const doc = await Vehicle.create({ matricula: mat, conductor, centro_costo, modelo })
+    return toObj(doc)
   } catch (err) {
-    if (err.message.includes('UNIQUE constraint failed')) {
+    if (err.code === 11000) {
       const e = new Error(`La matrícula ${mat} ya existe`)
       e.code = 409
       throw e
     }
     throw err
   }
-  return db.get('SELECT * FROM vehicles WHERE matricula = ?', [mat])
 }
 
 export const update = async (matricula, { conductor, centro_costo, modelo }) => {
-  const db = await getDb()
-  await db.run(
-    'UPDATE vehicles SET conductor = ?, centro_costo = ?, modelo = ? WHERE matricula = ?',
-    [conductor, centro_costo, modelo, matricula]
-  )
-  return db.get('SELECT * FROM vehicles WHERE matricula = ?', [matricula])
+  const doc = await Vehicle.findOneAndUpdate(
+    { matricula },
+    { conductor, centro_costo, modelo },
+    { new: true }
+  ).lean()
+  return toObj(doc)
 }
 
 export const remove = async (matricula) => {
-  const db    = await getDb()
-  const { c } = await db.get(
-    'SELECT COUNT(*) AS c FROM fuel_records WHERE matricula = ?',
-    [matricula]
-  )
-  if (c > 0) {
-    const e = new Error(`No se puede eliminar: el vehículo tiene ${c} registros de carga`)
+  const count = await FuelRecord.countDocuments({ matricula })
+  if (count > 0) {
+    const e = new Error(`No se puede eliminar: el vehículo tiene ${count} registros de carga`)
     e.code = 409
     throw e
   }
-  return db.run('DELETE FROM vehicles WHERE matricula = ?', [matricula])
+  return Vehicle.deleteOne({ matricula })
 }

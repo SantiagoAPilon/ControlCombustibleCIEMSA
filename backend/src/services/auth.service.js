@@ -1,10 +1,9 @@
 import jwt    from 'jsonwebtoken'
 import bcrypt  from 'bcrypt'
-import { getDb } from '../config/db_config.js'
+import { User } from '../modelos/user.model.js'
 
 export const doLogin = async ({ usuario, password }) => {
-  const db   = await getDb()
-  const user = await db.get('SELECT * FROM users WHERE usuario = ?', [usuario])
+  const user = await User.findOne({ usuario }).lean()
 
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     const err = new Error('Usuario o contraseña incorrectos')

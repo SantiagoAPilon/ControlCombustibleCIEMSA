@@ -1,111 +1,165 @@
-import { getDb } from '../config/db_config.js'
+import mongoose from 'mongoose'
+
+const fuelRecordSchema = new mongoose.Schema({
+  matricula:        { type: String, required: true },
+  fecha:            { type: String, required: true },
+  litros:           { type: Number, required: true },
+  km_actual:        Number,
+  tipo_combustible: String,
+  proveedor:        String,
+  costo_litro:      Number,
+  costo_total:      Number,
+})
+
+export const FuelRecord = mongoose.model('FuelRecord', fuelRecordSchema)
+
+// Pipeline compartido: calcula km_anterior, km_recorridos y consumo_km_l vía ventana
+// y hace el JOIN con vehicles. Recibe etapas de filtro pre y post ventana.
+const buildPipeline = ({ preMatch = {}, postMatch = {} } = {}) => {
+  const pipeline = []
+
+  if (Object.keys(preMatch).length)  pipeline.push({ $match: preMatch })
+
+  // Ventana: km anterior por matrícula ordenado por fecha + _id
+  pipeline.push({
+    $setWindowFields: {
+      partitionBy: '$matricula',
+      sortBy: { fecha: 1, _id: 1 },
+      output: {
+        km_anterior: { $shift: { output: '$km_actual', by: -1, default: null } },
+      },
+    },
+  })
+
+  // km_recorridos
+  pipeline.push({
+    $addFields: {
+      km_recorridos: {
+        $cond: {
+          if:   { $and: [{ $ne: ['$km_anterior', null] }, { $ne: ['$km_actual', null] }] },
+          then: { $subtract: ['$km_actual', '$km_anterior'] },
+          else: null,
+        },
+      },
+    },
+  })
+
+  // consumo_km_l
+  pipeline.push({
+    $addFields: {
+      consumo_km_l: {
+        $cond: {
+          if:   { $and: [{ $gt: ['$km_recorridos', 0] }, { $gt: ['$litros', 0] }] },
+          then: { $round: [{ $divide: ['$km_recorridos', '$litros'] }, 2] },
+          else: null,
+        },
+      },
+    },
+  })
+
+  if (Object.keys(postMatch).length) pipeline.push({ $match: postMatch })
+
+  // JOIN vehicles
+  pipeline.push({
+    $lookup: {
+      from:         'vehicles',
+      localField:   'matricula',
+      foreignField: 'matricula',
+      as:           '_v',
+    },
+  })
+  pipeline.push({ $unwind: '$_v' })
+  pipeline.push({
+    $addFields: {
+      conductor:    '$_v.conductor',
+      centro_costo: '$_v.centro_costo',
+      modelo:       '$_v.modelo',
+    },
+  })
+
+  // Proyección final
+  pipeline.push({
+    $project: {
+      id:               { $toString: '$_id' },
+      matricula:        1,
+      fecha:            1,
+      litros:           1,
+      km_actual:        1,
+      km_anterior:      1,
+      km_recorridos:    1,
+      consumo_km_l:     1,
+      tipo_combustible: 1,
+      proveedor:        1,
+      costo_litro:      1,
+      costo_total:      1,
+      conductor:        1,
+      centro_costo:     1,
+      modelo:           1,
+      _id:              0,
+    },
+  })
+
+  return pipeline
+}
 
 export const findAll = async ({ matricula, mes, anio } = {}) => {
-  const db = await getDb()
+  const preMatch  = {}
+  const postMatch = {}
 
-  // Compute km_anterior via LAG over ALL records first, then filter.
-  // This ensures correct chronological predecessor even when records are
-  // entered out of date order.
-  let whereClauses = ['1=1']
-  const params = []
+  if (matricula && matricula !== 'all') preMatch.matricula = matricula
 
-  if (matricula && matricula !== 'all') {
-    whereClauses.push('matricula = ?')
-    params.push(matricula)
-  }
-  if (mes) {
-    whereClauses.push("strftime('%m', fecha) = ?")
-    params.push(String(mes).padStart(2, '0'))
-  }
-  if (anio) {
-    whereClauses.push("strftime('%Y', fecha) = ?")
-    params.push(String(anio))
+  if (anio && mes) {
+    postMatch.fecha = { $regex: `^${anio}-${String(mes).padStart(2, '0')}` }
+  } else if (anio) {
+    postMatch.fecha = { $regex: `^${anio}` }
+  } else if (mes) {
+    postMatch.$expr = { $eq: [{ $substr: ['$fecha', 5, 2] }, String(mes).padStart(2, '0')] }
   }
 
-  const sql = `
-    WITH base AS (
-      SELECT
-        f.id, f.matricula, f.fecha, f.litros, f.km_actual,
-        f.tipo_combustible, f.proveedor, f.costo_litro, f.costo_total,
-        v.conductor, v.centro_costo, v.modelo,
-        LAG(f.km_actual) OVER (
-          PARTITION BY f.matricula
-          ORDER BY f.fecha ASC, f.id ASC
-        ) AS km_anterior
-      FROM fuel_records f
-      JOIN vehicles v ON f.matricula = v.matricula
-    )
-    SELECT *,
-      CASE WHEN km_anterior IS NOT NULL
-        THEN km_actual - km_anterior
-        ELSE NULL
-      END AS km_recorridos,
-      CASE
-        WHEN km_anterior IS NOT NULL
-          AND (km_actual - km_anterior) > 0
-          AND litros > 0
-        THEN ROUND((km_actual - km_anterior) / litros, 2)
-        ELSE NULL
-      END AS consumo_km_l
-    FROM base
-    WHERE ${whereClauses.join(' AND ')}
-    ORDER BY fecha DESC, id DESC
-  `
+  const pipeline = buildPipeline({ preMatch, postMatch })
+  pipeline.push({ $sort: { fecha: -1, _id: -1 } })
 
-  return db.all(sql, params)
+  return FuelRecord.aggregate(pipeline)
 }
 
-export const findLastByMatricula = async (matricula) => {
-  const db = await getDb()
-  return db.get(
-    'SELECT km_actual FROM fuel_records WHERE matricula = ? ORDER BY fecha DESC, id DESC LIMIT 1',
-    [matricula]
-  )
-}
+export const findLastByMatricula = async (matricula) =>
+  FuelRecord.findOne({ matricula }).sort({ fecha: -1, _id: -1 }).lean()
 
 export const create = async (data) => {
-  const db = await getDb()
-  const { matricula, fecha, litros, km_actual, km_anterior, km_recorridos, consumo_km_l,
+  const { matricula, fecha, litros, km_actual,
+          km_anterior, km_recorridos, consumo_km_l,
           tipo_combustible, proveedor, costo_litro, costo_total } = data
 
-  const result = await db.run(
-    `INSERT INTO fuel_records
-       (matricula, fecha, litros, km_actual, km_anterior, km_recorridos, consumo_km_l,
-        tipo_combustible, proveedor, costo_litro, costo_total)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [matricula, fecha, litros, km_actual, km_anterior, km_recorridos, consumo_km_l,
-     tipo_combustible || null, proveedor || null,
-     costo_litro != null ? parseFloat(costo_litro) : null,
-     costo_total  != null ? parseFloat(costo_total)  : null]
-  )
+  const doc = await FuelRecord.create({
+    matricula,
+    fecha,
+    litros:           parseFloat(litros),
+    km_actual:        km_actual    != null ? parseInt(km_actual, 10)    : null,
+    tipo_combustible: tipo_combustible || null,
+    proveedor:        proveedor        || null,
+    costo_litro:      costo_litro != null ? parseFloat(costo_litro) : null,
+    costo_total:      costo_total  != null ? parseFloat(costo_total)  : null,
+  })
 
-  return db.get(
-    `SELECT f.*, v.conductor, v.centro_costo, v.modelo
-     FROM fuel_records f
-     JOIN vehicles v ON f.matricula = v.matricula
-     WHERE f.id = ?`,
-    [result.lastID]
-  )
+  const pipeline = buildPipeline({ preMatch: { _id: doc._id } })
+  const [result] = await FuelRecord.aggregate(pipeline)
+  return result
 }
 
 export const update = async (id, data) => {
-  const db = await getDb()
   const { fecha, litros, km_actual, tipo_combustible, proveedor, costo_litro, costo_total } = data
-  return db.run(
-    `UPDATE fuel_records
-     SET fecha = ?, litros = ?, km_actual = ?,
-         tipo_combustible = ?, proveedor = ?,
-         costo_litro = ?, costo_total = ?
-     WHERE id = ?`,
-    [fecha, parseFloat(litros), parseInt(km_actual, 10),
-     tipo_combustible || null, proveedor || null,
-     costo_litro != null ? parseFloat(costo_litro) : null,
-     costo_total  != null ? parseFloat(costo_total)  : null,
-     id]
-  )
+  await FuelRecord.findByIdAndUpdate(id, {
+    $set: {
+      fecha,
+      litros:           parseFloat(litros),
+      km_actual:        km_actual != null ? parseInt(km_actual, 10) : null,
+      tipo_combustible: tipo_combustible || null,
+      proveedor:        proveedor        || null,
+      costo_litro:      costo_litro != null ? parseFloat(costo_litro) : null,
+      costo_total:      costo_total  != null ? parseFloat(costo_total)  : null,
+    },
+  })
+  return null
 }
 
-export const remove = async (id) => {
-  const db = await getDb()
-  return db.run('DELETE FROM fuel_records WHERE id = ?', [id])
-}
+export const remove = async (id) => FuelRecord.findByIdAndDelete(id)

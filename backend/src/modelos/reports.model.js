@@ -1,47 +1,75 @@
-import { getDb } from '../config/db_config.js'
+import { FuelRecord } from './fuel.model.js'
+import { Vehicle }    from './vehicle.model.js'
 
 export const getHeatmapData = async ({ desde, hasta }) => {
-  const db = await getDb()
-
-  // LAG over ALL records so the first record in the filtered window
-  // still gets a correct km_anterior from records before the window.
-  const rows = await db.all(`
-    WITH base AS (
-      SELECT
-        f.id, f.matricula, f.fecha, f.litros, f.km_actual, f.costo_total,
-        LAG(f.km_actual) OVER (PARTITION BY f.matricula ORDER BY f.fecha ASC, f.id ASC) AS km_anterior,
-        v.conductor, v.centro_costo, v.modelo
-      FROM fuel_records f
-      JOIN vehicles v ON f.matricula = v.matricula
-    ),
-    computed AS (
-      SELECT *,
-        CASE
-          WHEN km_anterior IS NOT NULL
-           AND (km_actual - km_anterior) > 0
-           AND litros > 0
-          THEN ROUND((km_actual - km_anterior) / CAST(litros AS REAL), 2)
-          ELSE NULL
-        END AS consumo_km_l
-      FROM base
-    )
-    SELECT
-      matricula, conductor, modelo, centro_costo,
-      strftime('%Y-%m', fecha) AS mes_anio,
-      COUNT(*)                                          AS cargas,
-      ROUND(SUM(litros), 2)                             AS total_litros,
-      ROUND(SUM(COALESCE(costo_total, 0)), 2)           AS total_costo,
-      ROUND(AVG(consumo_km_l), 2)                       AS avg_consumo
-    FROM computed
-    WHERE fecha >= ? AND fecha <= ?
-    GROUP BY matricula, mes_anio
-    ORDER BY centro_costo, matricula, mes_anio
-  `, [desde, hasta])
-
-  return rows
+  return FuelRecord.aggregate([
+    // Ventana sobre todos los registros para calcular consumo correcto
+    {
+      $setWindowFields: {
+        partitionBy: '$matricula',
+        sortBy: { fecha: 1, _id: 1 },
+        output: {
+          km_anterior: { $shift: { output: '$km_actual', by: -1, default: null } },
+        },
+      },
+    },
+    {
+      $addFields: {
+        km_recorridos: {
+          $cond: {
+            if:   { $and: [{ $ne: ['$km_anterior', null] }, { $ne: ['$km_actual', null] }] },
+            then: { $subtract: ['$km_actual', '$km_anterior'] },
+            else: null,
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        consumo_km_l: {
+          $cond: {
+            if:   { $and: [{ $gt: ['$km_recorridos', 0] }, { $gt: ['$litros', 0] }] },
+            then: { $round: [{ $divide: ['$km_recorridos', '$litros'] }, 2] },
+            else: null,
+          },
+        },
+      },
+    },
+    // Filtrar por rango de fechas
+    { $match: { fecha: { $gte: desde, $lte: hasta } } },
+    // mes_anio como YYYY-MM
+    { $addFields: { mes_anio: { $substr: ['$fecha', 0, 7] } } },
+    // Agrupar por matrícula + mes
+    {
+      $group: {
+        _id:          { matricula: '$matricula', mes_anio: '$mes_anio' },
+        cargas:       { $sum: 1 },
+        total_litros: { $sum: '$litros' },
+        total_costo:  { $sum: { $ifNull: ['$costo_total', 0] } },
+        avg_consumo:  { $avg: '$consumo_km_l' },
+      },
+    },
+    {
+      $project: {
+        _id:          0,
+        matricula:    '$_id.matricula',
+        mes_anio:     '$_id.mes_anio',
+        cargas:       1,
+        total_litros: { $round: ['$total_litros', 2] },
+        total_costo:  { $round: ['$total_costo',  2] },
+        avg_consumo:  { $round: ['$avg_consumo',  2] },
+      },
+    },
+    { $sort: { matricula: 1, mes_anio: 1 } },
+  ])
 }
 
 export const getAllVehiclesForReport = async () => {
-  const db = await getDb()
-  return db.all('SELECT * FROM vehicles ORDER BY centro_costo, matricula')
+  const docs = await Vehicle.find().sort({ centro_costo: 1, matricula: 1 }).lean()
+  return docs.map(v => ({
+    matricula:    v.matricula,
+    conductor:    v.conductor,
+    centro_costo: v.centro_costo,
+    modelo:       v.modelo,
+  }))
 }
