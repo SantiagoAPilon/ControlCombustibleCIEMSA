@@ -1,4 +1,4 @@
-const BASE = '/v1'
+const BASE = (import.meta.env.VITE_API_URL ?? '') + '/v1'
 
 const authHeaders = () => {
   const token = localStorage.getItem('token')

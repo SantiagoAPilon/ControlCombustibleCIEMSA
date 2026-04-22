@@ -12,7 +12,13 @@ import { conectarBD }       from './src/config/db_config.js'
 const app  = express()
 const PORT = process.env.PORT || 8001
 
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:8000' }))
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:8000').split(',').map(s => s.trim())
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) cb(null, true)
+    else cb(new Error('CORS: origen no permitido'))
+  },
+}))
 app.use(express.json())
 app.use(logMiddleware)
 
