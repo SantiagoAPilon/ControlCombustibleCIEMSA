@@ -1,4 +1,4 @@
-import { doObtenerCargas, doRegistrarCarga, doEliminarCarga } from '../services/fuel.service.js'
+import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga } from '../services/fuel.service.js'
 
 export const obtenerCargas = async (req, res) => {
   try {
@@ -19,6 +19,19 @@ export const registrarCarga = async (req, res) => {
     res.status(201).json(carga)
   } catch (e) {
     res.status(e.code || 400).json({ message: e.message })
+  }
+}
+
+export const actualizarCarga = async (req, res) => {
+  const { fecha, litros, km_actual, tipo_combustible, proveedor, costo_litro, costo_total } = req.body
+  if (!fecha || litros == null || km_actual == null) {
+    return res.status(400).json({ message: 'Faltan campos obligatorios: fecha, litros, km_actual' })
+  }
+  try {
+    const carga = await doActualizarCarga(req.params.id, { fecha, litros, km_actual, tipo_combustible, proveedor, costo_litro, costo_total })
+    res.status(200).json(carga)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
   }
 }
 

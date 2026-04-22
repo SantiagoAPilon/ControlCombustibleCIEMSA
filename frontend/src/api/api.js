@@ -63,4 +63,5 @@ export const getFuelRecords = (filters = {}) => {
   return req(`/fuel?${p}`)
 }
 export const addFuelRecord    = (data) => jsonReq('/fuel', 'POST', data)
+export const updateFuelRecord = (id, data) => jsonReq(`/fuel/${id}`, 'PUT', data)
 export const deleteFuelRecord = (id)   => req(`/fuel/${id}`, { method: 'DELETE' })

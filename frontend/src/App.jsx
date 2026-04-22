@@ -4,11 +4,13 @@ import FuelForm       from './components/FuelForm'
 import FuelTable      from './components/FuelTable'
 import FilterBar      from './components/FilterBar'
 import AdminVehicles  from './components/AdminVehicles'
+import EditFuelModal  from './components/EditFuelModal'
 import {
   login as apiLogin,
   getVehicles,
   getFuelRecords,
   addFuelRecord,
+  updateFuelRecord,
   deleteFuelRecord,
 } from './api/api'
 import './App.css'
@@ -24,9 +26,9 @@ export default function App() {
   const [notify,    setNotify]    = useState(null)
   const [filters,   setFilters]   = useState({
     matricula: 'all',
-    mes:  now.getMonth() + 1,
     anio: now.getFullYear(),
   })
+  const [editRecord, setEditRecord] = useState(null)
 
   // Carga vehículos al autenticarse
   useEffect(() => {
@@ -38,15 +40,15 @@ export default function App() {
     getVehicles().then(setVehicles).catch(() => flash('Error al cargar vehículos', 'error'))
 
   // Carga registros al cambiar filtros o tab
-  const { matricula, mes, anio } = filters
+  const { matricula, anio } = filters
   useEffect(() => {
     if (!isAuth || activeTab !== 'history') return
     setLoading(true)
-    getFuelRecords({ matricula, mes, anio })
+    getFuelRecords({ matricula, anio })
       .then(setRecords)
       .catch(() => flash('Error al cargar registros', 'error'))
       .finally(() => setLoading(false))
-  }, [isAuth, activeTab, matricula, mes, anio])
+  }, [isAuth, activeTab, matricula, anio])
 
   const flash = (message, type = 'success') => {
     setNotify({ message, type })
@@ -80,11 +82,26 @@ export default function App() {
     }
   }
 
+  const handleEdit = async (formData) => {
+    setLoading(true)
+    try {
+      await updateFuelRecord(editRecord.id, formData)
+      setEditRecord(null)
+      const data = await getFuelRecords({ matricula, anio })
+      setRecords(data)
+      flash('Registro actualizado')
+    } catch (err) {
+      flash(err.message || 'Error al actualizar', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar este registro?')) return
     try {
       await deleteFuelRecord(id)
-      const data = await getFuelRecords({ matricula, mes, anio })
+      const data = await getFuelRecords({ matricula, anio })
       setRecords(data)
       flash('Registro eliminado')
     } catch (err) {
@@ -94,8 +111,18 @@ export default function App() {
 
   if (!isAuth) return <Login onLogin={handleLogin} />
 
+
+
   return (
     <div className="app">
+      {editRecord && (
+        <EditFuelModal
+          record={editRecord}
+          loading={loading}
+          onSave={handleEdit}
+          onClose={() => setEditRecord(null)}
+        />
+      )}
       <header className="app-header">
         <div className="header-inner">
           <div className="header-title">
@@ -132,7 +159,7 @@ export default function App() {
         {activeTab === 'history' && (
           <>
             <FilterBar vehicles={vehicles} filters={filters} onChange={setFilters} />
-            <FuelTable records={records} loading={loading} onDelete={handleDelete} />
+            <FuelTable records={records} loading={loading} onEdit={setEditRecord} onDelete={handleDelete} />
           </>
         )}
         {activeTab === 'admin' && (

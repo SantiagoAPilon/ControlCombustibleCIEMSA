@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+
 const fmtDate = (s) => {
   const [y, m, d] = s.split('-');
   return `${d}/${m}/${y}`;
@@ -13,7 +15,33 @@ const consumoClass = (v) => {
   return 'low';
 };
 
-export default function FuelTable({ records, loading, onDelete }) {
+const exportToExcel = (records) => {
+  const rows = records.map(r => ({
+    'Fecha':           fmtDate(r.fecha),
+    'Matrícula':       r.matricula,
+    'Conductor':       r.conductor,
+    'Modelo':          r.modelo,
+    'CC':              r.centro_costo,
+    'Litros':          r.litros,
+    'KM Actual':       r.km_actual,
+    'KM Anterior':     r.km_anterior ?? '',
+    'KM Recorridos':   r.km_recorridos ?? '',
+    'km/L':            r.consumo_km_l ?? '',
+    'Tipo':            r.tipo_combustible ?? '',
+    'Proveedor':       r.proveedor ?? '',
+    '$/L':             r.costo_litro ?? '',
+    'Total $':         r.costo_total ?? '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Combustible');
+
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `combustible_${today}.xlsx`);
+};
+
+export default function FuelTable({ records, loading, onEdit, onDelete }) {
   if (loading) return <div className="state-msg">Cargando registros…</div>;
   if (!records.length) return <div className="state-msg empty">No hay registros para los filtros seleccionados.</div>;
 
@@ -50,6 +78,9 @@ export default function FuelTable({ records, loading, onDelete }) {
             </span>
           </div>
         )}
+        <button className="btn-excel" onClick={() => exportToExcel(records)}>
+          ⬇ Descargar Excel
+        </button>
       </div>
 
       {/* Table */}
@@ -93,8 +124,9 @@ export default function FuelTable({ records, loading, onDelete }) {
                 <td className="muted">{r.proveedor || '—'}</td>
                 <td className="r muted">{r.costo_litro != null ? `$${fmtNum(r.costo_litro)}` : '—'}</td>
                 <td className="r">{r.costo_total != null ? `$${fmtNum(r.costo_total)}` : '—'}</td>
-                <td>
-                  <button className="btn-del" onClick={() => onDelete(r.id)} title="Eliminar">✕</button>
+                <td className="actions-cell">
+                  <button className="btn-edit" onClick={() => onEdit(r)} title="Editar">✎</button>
+                  <button className="btn-del"  onClick={() => onDelete(r.id)} title="Eliminar">✕</button>
                 </td>
               </tr>
             ))}

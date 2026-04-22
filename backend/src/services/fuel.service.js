@@ -1,4 +1,4 @@
-import { findAll, findLastByMatricula, create, remove } from '../modelos/fuel.model.js'
+import { findAll, findLastByMatricula, create, update, remove } from '../modelos/fuel.model.js'
 
 export const doObtenerCargas = (filters) => findAll(filters)
 
@@ -14,5 +14,7 @@ export const doRegistrarCarga = async (data) => {
 
   return create({ ...data, km_anterior, km_recorridos, consumo_km_l })
 }
+
+export const doActualizarCarga = (id, data) => update(id, data)
 
 export const doEliminarCarga = (id) => remove(id)

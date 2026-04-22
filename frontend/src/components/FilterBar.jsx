@@ -1,10 +1,3 @@
-const MONTHS = [
-  { v: 1,  l: 'Enero' },   { v: 2,  l: 'Febrero' }, { v: 3,  l: 'Marzo' },
-  { v: 4,  l: 'Abril' },   { v: 5,  l: 'Mayo' },    { v: 6,  l: 'Junio' },
-  { v: 7,  l: 'Julio' },   { v: 8,  l: 'Agosto' },  { v: 9,  l: 'Septiembre' },
-  { v: 10, l: 'Octubre' }, { v: 11, l: 'Noviembre'},{ v: 12, l: 'Diciembre' },
-];
-
 const thisYear  = new Date().getFullYear();
 const yearRange = Array.from({ length: 5 }, (_, i) => thisYear - i);
 const CC        = ['OM2204', 'OM2404'];
@@ -27,16 +20,6 @@ export default function FilterBar({ vehicles, filters, onChange }) {
                 </option>
               ))}
             </optgroup>
-          ))}
-        </select>
-      </div>
-
-      <div className="filter-group">
-        <label>Mes</label>
-        <select value={filters.mes} onChange={set('mes')}>
-          <option value="">Todos los meses</option>
-          {MONTHS.map(m => (
-            <option key={m.v} value={m.v}>{m.l}</option>
           ))}
         </select>
       </div>
