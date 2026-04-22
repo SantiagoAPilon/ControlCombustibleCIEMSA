@@ -32,7 +32,7 @@ export async function conectarBD() {
       matricula        TEXT    NOT NULL,
       fecha            TEXT    NOT NULL,
       litros           REAL    NOT NULL,
-      km_actual        INTEGER NOT NULL,
+      km_actual        INTEGER,
       km_anterior      INTEGER,
       km_recorridos    INTEGER,
       consumo_km_l     REAL,
@@ -43,6 +43,35 @@ export async function conectarBD() {
       FOREIGN KEY (matricula) REFERENCES vehicles(matricula)
     );
   `)
+
+  // Migración: si km_actual tiene NOT NULL, recrear sin esa restricción
+  const cols = await _db.all("PRAGMA table_info(fuel_records)")
+  const kmCol = cols.find(c => c.name === 'km_actual')
+  if (kmCol && kmCol.notnull === 1) {
+    await _db.exec(`
+      BEGIN TRANSACTION;
+      ALTER TABLE fuel_records RENAME TO _fr_old;
+      CREATE TABLE fuel_records (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        matricula        TEXT    NOT NULL,
+        fecha            TEXT    NOT NULL,
+        litros           REAL    NOT NULL,
+        km_actual        INTEGER,
+        km_anterior      INTEGER,
+        km_recorridos    INTEGER,
+        consumo_km_l     REAL,
+        tipo_combustible TEXT,
+        proveedor        TEXT,
+        costo_litro      REAL,
+        costo_total      REAL,
+        FOREIGN KEY (matricula) REFERENCES vehicles(matricula)
+      );
+      INSERT INTO fuel_records SELECT * FROM _fr_old;
+      DROP TABLE _fr_old;
+      COMMIT;
+    `)
+    console.log('Migración BD: km_actual ahora permite NULL ✓')
+  }
 
   const { c } = await _db.get('SELECT COUNT(*) AS c FROM vehicles')
   if (c === 0) {
