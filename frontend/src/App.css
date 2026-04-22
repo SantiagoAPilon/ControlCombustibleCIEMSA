@@ -283,6 +283,36 @@
 /* ── Acciones en tabla ──────────────────────────────────────── */
 .actions-cell { display: flex; gap: 6px; justify-content: flex-end; }
 
+/* ── Paginación ─────────────────────────────────────────────── */
+.pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  background: #fff; border-radius: 0 0 12px 12px;
+  padding: 12px 18px;
+  border-top: 1px solid #eaecf2;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  margin-top: -1px;
+}
+.pagination-info { font-size: 13px; color: #6b7a92; }
+.pagination-controls { display: flex; align-items: center; gap: 4px; }
+.pg-btn {
+  min-width: 34px; height: 34px; padding: 0 6px;
+  border: 1.5px solid #d3daea; border-radius: 6px;
+  background: #fff; color: #2c3e50;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: all .15s;
+}
+.pg-btn:hover:not(:disabled) { border-color: #1a5dbd; color: #1a5dbd; background: #e8f0fd; }
+.pg-btn.active { background: #1a5dbd; color: #fff; border-color: #1a5dbd; }
+.pg-btn:disabled { opacity: .35; cursor: not-allowed; }
+.pg-ellipsis { color: #8896a8; font-size: 14px; padding: 0 4px; line-height: 34px; }
+.pagination-size { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b7a92; }
+.pagination-size select {
+  padding: 6px 10px; border: 1.5px solid #d3daea;
+  border-radius: 6px; background: #fff; font-size: 13px;
+}
+.pagination-size select:focus { border-color: #1a5dbd; outline: none; }
+
 /* ── Reports / Heatmap ──────────────────────────────────────── */
 .reports-section { display: flex; flex-direction: column; gap: 16px; }
 

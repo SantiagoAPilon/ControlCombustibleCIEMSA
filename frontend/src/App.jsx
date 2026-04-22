@@ -20,6 +20,7 @@ const now = new Date()
 
 export default function App() {
   const [isAuth,    setIsAuth]    = useState(!!localStorage.getItem('token'))
+  const [userRol,   setUserRol]   = useState(localStorage.getItem('rol') || '')
   const [activeTab, setActiveTab] = useState('form')
   const [vehicles,  setVehicles]  = useState([])
   const [records,   setRecords]   = useState([])
@@ -59,12 +60,16 @@ export default function App() {
   const handleLogin = async (credentials) => {
     const data = await apiLogin(credentials)
     localStorage.setItem('token', data.token)
+    localStorage.setItem('rol', data.rol)
+    setUserRol(data.rol)
     setIsAuth(true)
   }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('rol')
     setIsAuth(false)
+    setUserRol('')
     setActiveTab('form')
     setVehicles([])
     setRecords([])
@@ -151,9 +156,11 @@ export default function App() {
         <button className={`tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
           Informes
         </button>
-        <button className={`tab ${activeTab === 'admin'   ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
-          ⚙ Administración
-        </button>
+        {userRol === 'admin' && (
+          <button className={`tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+            ⚙ Administración
+          </button>
+        )}
       </nav>
 
       <main className="main-content">

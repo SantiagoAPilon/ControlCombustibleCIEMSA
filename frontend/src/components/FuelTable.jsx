@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 
 const fmtDate = (s) => {
@@ -41,16 +42,46 @@ const exportToExcel = (records) => {
   XLSX.writeFile(wb, `combustible_${today}.xlsx`);
 };
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 150, 200];
+
 export default function FuelTable({ records, loading, onEdit, onDelete }) {
+  const [page, setPage]         = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // Volver a pág 1 cuando cambian los registros o el tamaño de página
+  useEffect(() => { setPage(1); }, [records, pageSize]);
+
   if (loading) return <div className="state-msg">Cargando registros…</div>;
   if (!records.length) return <div className="state-msg empty">No hay registros para los filtros seleccionados.</div>;
 
+  // Stats sobre TODOS los registros
   const totalLitros = records.reduce((s, r) => s + r.litros, 0);
   const totalCosto  = records.reduce((s, r) => s + (r.costo_total || 0), 0);
   const withConsumo = records.filter(r => r.consumo_km_l != null);
   const avgConsumo  = withConsumo.length
     ? withConsumo.reduce((s, r) => s + r.consumo_km_l, 0) / withConsumo.length
     : null;
+
+  // Paginación
+  const totalPages  = Math.ceil(records.length / pageSize);
+  const start       = (page - 1) * pageSize;
+  const pageRecords = records.slice(start, start + pageSize);
+
+  const goTo = (p) => setPage(Math.max(1, Math.min(totalPages, p)));
+
+  // Páginas a mostrar en el control (máx 7 botones)
+  const pageButtons = () => {
+    const delta = 2;
+    const range = [];
+    for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
+      range.push(i);
+    }
+    if (range[0] > 2) range.unshift('...');
+    if (range[0] !== 1) range.unshift(1);
+    if (range[range.length - 1] < totalPages - 1) range.push('...');
+    if (range[range.length - 1] !== totalPages) range.push(totalPages);
+    return range;
+  };
 
   return (
     <div className="table-section">
@@ -106,7 +137,7 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
             </tr>
           </thead>
           <tbody>
-            {records.map(r => (
+            {pageRecords.map(r => (
               <tr key={r.id}>
                 <td className="nowrap">{fmtDate(r.fecha)}</td>
                 <td><span className="badge">{r.matricula}</span></td>
@@ -132,6 +163,40 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Paginación */}
+      <div className="pagination">
+        <div className="pagination-info">
+          Mostrando {start + 1}–{Math.min(start + pageSize, records.length)} de {records.length} registros
+        </div>
+
+        <div className="pagination-controls">
+          <button className="pg-btn" onClick={() => goTo(1)}        disabled={page === 1}>«</button>
+          <button className="pg-btn" onClick={() => goTo(page - 1)} disabled={page === 1}>‹</button>
+
+          {pageButtons().map((p, i) =>
+            p === '...'
+              ? <span key={`ellipsis-${i}`} className="pg-ellipsis">…</span>
+              : <button
+                  key={p}
+                  className={`pg-btn ${p === page ? 'active' : ''}`}
+                  onClick={() => goTo(p)}
+                >{p}</button>
+          )}
+
+          <button className="pg-btn" onClick={() => goTo(page + 1)} disabled={page === totalPages}>›</button>
+          <button className="pg-btn" onClick={() => goTo(totalPages)} disabled={page === totalPages}>»</button>
+        </div>
+
+        <div className="pagination-size">
+          <label>Filas:</label>
+          <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))}>
+            {PAGE_SIZE_OPTIONS.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
   );

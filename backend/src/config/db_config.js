@@ -1,5 +1,6 @@
 import { open }         from 'sqlite'
 import sqlite3           from 'sqlite3'
+import bcrypt            from 'bcrypt'
 import path              from 'path'
 import fs                from 'fs'
 import { fileURLToPath } from 'url'
@@ -20,6 +21,12 @@ export async function conectarBD() {
   })
 
   await _db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      usuario       TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      rol           TEXT NOT NULL DEFAULT 'usuario'
+    );
     CREATE TABLE IF NOT EXISTS vehicles (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       matricula     TEXT UNIQUE NOT NULL,
@@ -95,6 +102,24 @@ export async function conectarBD() {
         row
       )
     }
+  }
+
+  // Seed de usuarios por defecto si la tabla está vacía
+  const { uc } = await _db.get('SELECT COUNT(*) AS uc FROM users')
+  if (uc === 0) {
+    const seedUsers = [
+      { usuario: process.env.ADMIN_USER || 'santiago', password: process.env.ADMIN_PASSWORD || 'santiago', rol: 'admin' },
+      { usuario: 'ososa',    password: 'ososa',    rol: 'usuario' },
+      { usuario: 'atechera', password: 'atechera', rol: 'usuario' },
+    ]
+    for (const u of seedUsers) {
+      const hash = await bcrypt.hash(u.password, 10)
+      await _db.run(
+        'INSERT OR IGNORE INTO users (usuario, password_hash, rol) VALUES (?, ?, ?)',
+        [u.usuario, hash, u.rol]
+      )
+    }
+    console.log('Usuarios iniciales creados ✓')
   }
 
   console.log('SQLite conectado ✓')
