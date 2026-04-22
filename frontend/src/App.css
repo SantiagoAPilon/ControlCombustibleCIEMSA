@@ -282,3 +282,93 @@
 
 /* ── Acciones en tabla ──────────────────────────────────────── */
 .actions-cell { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* ── Reports / Heatmap ──────────────────────────────────────── */
+.reports-section { display: flex; flex-direction: column; gap: 16px; }
+
+.reports-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.reports-controls { display: flex; align-items: center; gap: 10px; }
+.reports-controls label { font-size: 13px; font-weight: 600; color: #6b7a92; }
+.reports-controls select {
+  padding: 7px 12px; border: 1.5px solid #d3daea; border-radius: 7px;
+  background: #fff; font-size: 13px;
+}
+.reports-controls select:focus { border-color: #1a5dbd; }
+
+/* Heatmap legend */
+.hm-legend {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+  background: #fff; border-radius: 10px; padding: 10px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06); font-size: 12px;
+}
+.hm-legend-item {
+  padding: 4px 12px; border-radius: 5px; font-weight: 600;
+}
+.hm-legend-hint { color: #8896a8; font-size: 11px; margin-left: auto; }
+
+/* Heatmap table wrapper */
+.hm-wrapper {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow-x: auto;
+}
+.hm-table { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.hm-table thead th {
+  background: #0d3b7a; color: #fff;
+  padding: 9px 10px; text-align: center; font-size: 11px; font-weight: 700;
+  position: sticky; top: 0; z-index: 2;
+}
+.hm-th-mat  { text-align: left; min-width: 90px;  padding-left: 14px; }
+.hm-th-cond { text-align: left; min-width: 150px; }
+.hm-th-mod  { text-align: left; min-width: 140px; }
+.hm-th-month { min-width: 58px; }
+
+/* CC header row */
+.hm-cc-header td {
+  background: #e8f0fd; color: #0d3b7a;
+  font-weight: 700; font-size: 12px;
+  padding: 6px 14px; letter-spacing: .3px;
+}
+
+/* Vehicle rows */
+.hm-row td { padding: 7px 10px; border-bottom: 1px solid #eaecf2; }
+.hm-row:hover td { background: #f6f8fd; }
+.hm-row td:first-child { padding-left: 14px; }
+.hm-cond { color: #2c3e50; }
+.hm-mod  { color: #6b7a92; }
+
+/* Subtotal row */
+.hm-subtotal td {
+  background: #f0f2f6; font-weight: 700; font-size: 11px;
+  padding: 6px 10px; border-top: 1px solid #d3daea; border-bottom: 2px solid #c0c9d8;
+  color: #2c3e50;
+}
+.hm-subtotal td:first-child { padding-left: 14px; }
+
+/* Heatmap cells */
+.hm-cell {
+  text-align: center; font-weight: 700; font-size: 12px;
+  border-radius: 4px; cursor: default; transition: filter .15s;
+  padding: 6px 4px;
+}
+.hm-cell:hover { filter: brightness(0.88); }
+
+.hm-good  { background: #c8e6c9; color: #1b5e20; }
+.hm-ok    { background: #ffe0b2; color: #bf360c; }
+.hm-low   { background: #ffcdd2; color: #b71c1c; }
+.hm-empty { background: #f0f2f6; color: #aab2be; font-weight: 400; }
+
+.hm-subtotal-cell { border-radius: 4px; }
+
+/* Tooltip */
+.hm-tooltip {
+  position: fixed; z-index: 1100;
+  background: #1a2636; color: #fff;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; line-height: 1.6;
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+  pointer-events: none; max-width: 220px;
+}
+.hm-tooltip strong { font-size: 13px; display: block; margin-bottom: 4px; }
+.tt-muted { color: #94a3b8; }

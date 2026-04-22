@@ -65,3 +65,11 @@ export const getFuelRecords = (filters = {}) => {
 export const addFuelRecord    = (data) => jsonReq('/fuel', 'POST', data)
 export const updateFuelRecord = (id, data) => jsonReq(`/fuel/${id}`, 'PUT', data)
 export const deleteFuelRecord = (id)   => req(`/fuel/${id}`, { method: 'DELETE' })
+
+// Reports
+export const getHeatmap = ({ meses, hasta } = {}) => {
+  const p = new URLSearchParams()
+  if (meses) p.set('meses', meses)
+  if (hasta) p.set('hasta', hasta)
+  return req(`/reports/heatmap?${p}`)
+}

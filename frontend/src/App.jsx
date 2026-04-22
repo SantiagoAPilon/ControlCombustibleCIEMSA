@@ -5,6 +5,7 @@ import FuelTable      from './components/FuelTable'
 import FilterBar      from './components/FilterBar'
 import AdminVehicles  from './components/AdminVehicles'
 import EditFuelModal  from './components/EditFuelModal'
+import Reports        from './components/Reports'
 import {
   login as apiLogin,
   getVehicles,
@@ -147,6 +148,9 @@ export default function App() {
         <button className={`tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
           Historial
         </button>
+        <button className={`tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+          Informes
+        </button>
         <button className={`tab ${activeTab === 'admin'   ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
           ⚙ Administración
         </button>
@@ -162,6 +166,7 @@ export default function App() {
             <FuelTable records={records} loading={loading} onEdit={setEditRecord} onDelete={handleDelete} />
           </>
         )}
+        {activeTab === 'reports' && <Reports />}
         {activeTab === 'admin' && (
           <AdminVehicles vehicles={vehicles} onRefresh={loadVehicles} />
         )}
