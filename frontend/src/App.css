@@ -405,54 +405,96 @@
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
+
   /* Header */
-  .app-header { padding: 10px 16px; }
-  .header-title h1 { font-size: 16px; }
-  .header-icon { font-size: 18px; }
+  .app-header { padding: 8px 14px; }
+  .header-title h1 { font-size: 15px; }
+  .header-icon { font-size: 17px; }
   .company-badge { display: none; }
-  .btn-logout { padding: 4px 10px; font-size: 12px; }
+  .btn-logout { padding: 4px 10px; font-size: 11px; }
 
   /* Tabs */
-  .tabs { padding: 0 8px; overflow-x: auto; gap: 0; }
-  .tab  { padding: 11px 14px; font-size: 12px; white-space: nowrap; }
+  .tabs { padding: 0 6px; overflow-x: auto; gap: 0; -webkit-overflow-scrolling: touch; }
+  .tab  { padding: 10px 13px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
 
   /* Main */
-  .main-content { margin: 14px auto; padding: 0 12px; }
+  .main-content { margin: 12px auto; padding: 0 10px; }
 
   /* Form */
-  .form-card { padding: 20px 16px; }
-  .form-row  { grid-template-columns: 1fr; gap: 12px; }
+  .form-card { padding: 16px 14px; }
+  .form-row  { grid-template-columns: 1fr; gap: 10px; }
+  .btn-primary  { width: 100%; justify-content: center; }
+  .btn-secondary { width: 100%; justify-content: center; }
 
-  /* Stats */
-  .stat-card  { min-width: 120px; padding: 10px 14px; }
-  .stat-value { font-size: 18px; }
+  /* Stats row — grid 2×2 en mobile */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .stat-card  { min-width: 0; padding: 10px 12px; }
+  .stat-label { font-size: 10px; }
+  .stat-value { font-size: 16px; }
+  .btn-excel  {
+    grid-column: 1 / -1;
+    margin-left: 0; width: 100%;
+    padding: 9px; text-align: center;
+  }
+
+  /* Tabla — compactar fuerte para que el scroll horizontal sea viable */
+  .fuel-table { font-size: 11px; }
+  .fuel-table thead th {
+    padding: 7px 7px; font-size: 10px;
+  }
+  .fuel-table tbody td { padding: 6px 7px; }
+  .badge { padding: 1px 6px; font-size: 10px; }
+  .btn-edit { padding: 2px 7px; font-size: 11px; }
+  .btn-del  { padding: 2px 7px; font-size: 11px; }
+
+  /* Paginación apilada */
+  .pagination {
+    flex-direction: column; align-items: center;
+    gap: 8px; padding: 10px 12px;
+  }
+  .pagination-info { font-size: 12px; }
+  .pg-btn { min-width: 30px; height: 30px; font-size: 12px; }
+  .pagination-size { font-size: 12px; }
+  .pagination-size select { font-size: 12px; padding: 4px 8px; }
 
   /* Filter */
-  .filter-bar { padding: 12px 14px; gap: 12px; }
-  .filter-group select { min-width: 0; width: 100%; }
+  .filter-bar { padding: 12px 12px; gap: 10px; }
   .filter-group { width: 100%; }
+  .filter-group select { min-width: 0; width: 100%; }
 
-  /* Admin form */
-  .admin-form-card { padding: 18px 14px; }
-  .admin-actions { flex-wrap: wrap; }
+  /* Admin */
+  .admin-form-card { padding: 16px 12px; }
+  .admin-actions { flex-wrap: wrap; gap: 8px; }
 
   /* Modal */
-  .modal { padding: 20px 16px; }
-
-  /* Botón excel en stats row */
-  .btn-excel { margin-left: 0; width: 100%; text-align: center; }
-  .stats-row { flex-direction: column; }
-  .stats-row .stat-card { min-width: 0; }
+  .modal { padding: 18px 14px; }
 
   /* Heatmap */
   .reports-header { flex-direction: column; align-items: flex-start; }
   .hm-legend { gap: 8px; }
   .hm-legend-hint { display: none; }
+  .hm-table { font-size: 11px; }
+  .hm-table thead th { padding: 6px 7px; font-size: 10px; }
 }
 
 @media (max-width: 480px) {
-  .header-title h1 { font-size: 14px; }
-  .tab { padding: 10px 10px; font-size: 11px; }
-  .main-content { padding: 0 8px; }
-  .form-card { padding: 16px 12px; }
+  .app-header { padding: 7px 10px; }
+  .header-title h1 { font-size: 13px; }
+  .tab { padding: 9px 10px; font-size: 11px; }
+  .main-content { padding: 0 6px; }
+  .form-card { padding: 14px 10px; }
+
+  /* Tabla aún más compacta en móvil pequeño */
+  .fuel-table { font-size: 10px; }
+  .fuel-table thead th { padding: 6px 5px; font-size: 9px; }
+  .fuel-table tbody td { padding: 5px 5px; }
+
+  /* Stats en columna en pantallas muy pequeñas */
+  .stats-row { grid-template-columns: 1fr; }
+  .btn-excel { grid-column: 1; }
 }
