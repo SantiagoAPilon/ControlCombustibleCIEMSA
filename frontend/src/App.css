@@ -102,8 +102,8 @@
 .form-actions { padding-top: 4px; }
 .btn-primary {
   background: #1a5dbd; color: #fff; border: none;
-  padding: 12px 34px; border-radius: 7px;
-  font-size: 14px; font-weight: 700; transition: background .2s;
+  padding: 9px 24px; border-radius: 7px;
+  font-size: 13px; font-weight: 700; transition: background .2s;
 }
 .btn-primary:hover:not(:disabled) { background: #0d3b7a; }
 .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
@@ -240,7 +240,7 @@
 .btn-edit:hover { background: #1a5dbd; color: #fff; border-color: #1a5dbd; }
 .btn-secondary {
   background: #f0f2f6; color: #2c3e50; border: 1px solid #d3daea;
-  padding: 12px 22px; border-radius: 7px; font-size: 14px; font-weight: 600; transition: background .2s;
+  padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; transition: background .2s;
 }
 .btn-secondary:hover { background: #dde3ed; }
 .row-editing { background: #e8f0fd !important; }
@@ -402,3 +402,57 @@
 }
 .hm-tooltip strong { font-size: 13px; display: block; margin-bottom: 4px; }
 .tt-muted { color: #94a3b8; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Header */
+  .app-header { padding: 10px 16px; }
+  .header-title h1 { font-size: 16px; }
+  .header-icon { font-size: 18px; }
+  .company-badge { display: none; }
+  .btn-logout { padding: 4px 10px; font-size: 12px; }
+
+  /* Tabs */
+  .tabs { padding: 0 8px; overflow-x: auto; gap: 0; }
+  .tab  { padding: 11px 14px; font-size: 12px; white-space: nowrap; }
+
+  /* Main */
+  .main-content { margin: 14px auto; padding: 0 12px; }
+
+  /* Form */
+  .form-card { padding: 20px 16px; }
+  .form-row  { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Stats */
+  .stat-card  { min-width: 120px; padding: 10px 14px; }
+  .stat-value { font-size: 18px; }
+
+  /* Filter */
+  .filter-bar { padding: 12px 14px; gap: 12px; }
+  .filter-group select { min-width: 0; width: 100%; }
+  .filter-group { width: 100%; }
+
+  /* Admin form */
+  .admin-form-card { padding: 18px 14px; }
+  .admin-actions { flex-wrap: wrap; }
+
+  /* Modal */
+  .modal { padding: 20px 16px; }
+
+  /* Botón excel en stats row */
+  .btn-excel { margin-left: 0; width: 100%; text-align: center; }
+  .stats-row { flex-direction: column; }
+  .stats-row .stat-card { min-width: 0; }
+
+  /* Heatmap */
+  .reports-header { flex-direction: column; align-items: flex-start; }
+  .hm-legend { gap: 8px; }
+  .hm-legend-hint { display: none; }
+}
+
+@media (max-width: 480px) {
+  .header-title h1 { font-size: 14px; }
+  .tab { padding: 10px 10px; font-size: 11px; }
+  .main-content { padding: 0 8px; }
+  .form-card { padding: 16px 12px; }
+}
