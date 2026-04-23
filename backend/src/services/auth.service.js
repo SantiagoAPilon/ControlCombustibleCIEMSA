@@ -3,7 +3,7 @@ import bcrypt  from 'bcrypt'
 import { User } from '../modelos/user.model.js'
 
 export const doLogin = async ({ usuario, password }) => {
-  const user = await User.findOne({ usuario }).lean()
+  const user = await User.findOne({ usuario: { $regex: `^${usuario}$`, $options: 'i' } }).lean()
 
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     const err = new Error('Usuario o contraseña incorrectos')
