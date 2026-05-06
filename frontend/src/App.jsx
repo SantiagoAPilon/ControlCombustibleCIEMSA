@@ -13,6 +13,8 @@ import {
   addFuelRecord,
   updateFuelRecord,
   deleteFuelRecord,
+  attachTicketFoto,
+  fetchTicketFoto,
 } from './api/api'
 import './App.css'
 
@@ -75,16 +77,34 @@ export default function App() {
     setRecords([])
   }
 
-  const handleSubmit = async (formData) => {
+  const handleSubmit = async (formData, imageFile) => {
     setLoading(true)
     try {
-      await addFuelRecord(formData)
+      const record = await addFuelRecord(formData)
+      if (imageFile && record?.id) {
+        try {
+          await attachTicketFoto(record.id, imageFile)
+        } catch {
+          flash('Carga registrada pero no se pudo guardar la foto del ticket', 'error')
+          setActiveTab('history')
+          return
+        }
+      }
       flash('Carga registrada correctamente')
       setActiveTab('history')
     } catch (err) {
       flash(err.message || 'Error al guardar la carga', 'error')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleVerFoto = async (id) => {
+    try {
+      const url = await fetchTicketFoto(id)
+      window.open(url, '_blank')
+    } catch {
+      flash('No se pudo cargar la foto del ticket', 'error')
     }
   }
 
@@ -170,7 +190,7 @@ export default function App() {
         {activeTab === 'history' && (
           <>
             <FilterBar vehicles={vehicles} filters={filters} onChange={setFilters} />
-            <FuelTable records={records} loading={loading} onEdit={setEditRecord} onDelete={handleDelete} />
+            <FuelTable records={records} loading={loading} onEdit={setEditRecord} onDelete={handleDelete} onVerFoto={handleVerFoto} />
           </>
         )}
         {activeTab === 'reports' && <Reports />}

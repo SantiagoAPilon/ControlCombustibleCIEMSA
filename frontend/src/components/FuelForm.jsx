@@ -21,6 +21,8 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
   const [autoTotal, setAutoTotal] = useState(true);
   const [scanning, setScanning]   = useState(false);
   const [scanError, setScanError] = useState('');
+  const [fotoFile, setFotoFile]   = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
   const fileInputRef              = useRef(null);
 
   const selectedVehicle = vehicles.find(v => v.matricula === form.matricula);
@@ -44,6 +46,9 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
     if (!file) return;
     setScanError('');
     setScanning(true);
+    // Guardar archivo y previsualización antes de que el input se limpie
+    setFotoFile(file);
+    setFotoPreview(URL.createObjectURL(file));
     try {
       const datos = await scanTicket(file);
       setForm(prev => ({
@@ -58,27 +63,38 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
       if (datos.costo_total != null) setAutoTotal(false);
     } catch (err) {
       setScanError(err.message || 'Error al procesar el ticket');
+      setFotoFile(null);
+      setFotoPreview(null);
     } finally {
       setScanning(false);
-      // Limpiar el input para permitir escanear el mismo archivo nuevamente
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const quitarFoto = () => {
+    setFotoFile(null);
+    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    setFotoPreview(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({
-      matricula:        form.matricula,
-      fecha:            form.fecha,
-      litros:           parseFloat(form.litros),
-      km_actual:        parseInt(form.km_actual, 10),
-      tipo_combustible: form.tipo_combustible || null,
-      proveedor:        form.proveedor || null,
-      costo_litro:      form.costo_litro ? parseFloat(form.costo_litro) : null,
-      costo_total:      form.costo_total  ? parseFloat(form.costo_total)  : null,
-    });
+    onSubmit(
+      {
+        matricula:        form.matricula,
+        fecha:            form.fecha,
+        litros:           parseFloat(form.litros),
+        km_actual:        parseInt(form.km_actual, 10),
+        tipo_combustible: form.tipo_combustible || null,
+        proveedor:        form.proveedor || null,
+        costo_litro:      form.costo_litro ? parseFloat(form.costo_litro) : null,
+        costo_total:      form.costo_total  ? parseFloat(form.costo_total)  : null,
+      },
+      fotoFile,
+    );
     setForm(emptyForm());
     setAutoTotal(true);
+    quitarFoto();
   };
 
   const cc = ['OM2204', 'OM2404'];
@@ -110,6 +126,17 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
         </span>
       </div>
       {scanError && <p className="scan-error">{scanError}</p>}
+      {fotoPreview && (
+        <div className="foto-preview-bar">
+          <img src={fotoPreview} alt="Vista previa del ticket" className="foto-thumb" />
+          <div className="foto-preview-info">
+            <span className="foto-ok">Foto del ticket lista para guardar</span>
+            <button type="button" className="btn-quitar-foto" onClick={quitarFoto}>
+              Quitar foto
+            </button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="fuel-form">
 

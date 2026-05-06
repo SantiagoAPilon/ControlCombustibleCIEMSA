@@ -44,7 +44,7 @@ const exportToExcel = (records) => {
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 150, 200];
 
-export default function FuelTable({ records, loading, onEdit, onDelete }) {
+export default function FuelTable({ records, loading, onEdit, onDelete, onVerFoto }) {
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -133,6 +133,7 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
               <th>Proveedor</th>
               <th className="r">$/L</th>
               <th className="r">Total $</th>
+              <th>Ticket</th>
               <th></th>
             </tr>
           </thead>
@@ -155,6 +156,12 @@ export default function FuelTable({ records, loading, onEdit, onDelete }) {
                 <td className="muted">{r.proveedor || '—'}</td>
                 <td className="r muted">{r.costo_litro != null ? `$${fmtNum(r.costo_litro)}` : '—'}</td>
                 <td className="r">{r.costo_total != null ? `$${fmtNum(r.costo_total)}` : '—'}</td>
+                <td className="tc">
+                  {r.tiene_foto
+                    ? <button className="btn-foto" onClick={() => onVerFoto(r.id)} title="Ver foto del ticket">📷</button>
+                    : <span className="muted">—</span>
+                  }
+                </td>
                 <td className="actions-cell">
                   <button className="btn-edit" onClick={() => onEdit(r)} title="Editar">✎</button>
                   <button className="btn-del"  onClick={() => onDelete(r.id)} title="Eliminar">✕</button>

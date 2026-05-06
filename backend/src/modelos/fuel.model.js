@@ -9,6 +9,8 @@ const fuelRecordSchema = new mongoose.Schema({
   proveedor:        String,
   costo_litro:      Number,
   costo_total:      Number,
+  foto:             Buffer,
+  foto_mime:        String,
 })
 
 export const FuelRecord = mongoose.model('FuelRecord', fuelRecordSchema)
@@ -95,6 +97,7 @@ const buildPipeline = ({ preMatch = {}, postMatch = {} } = {}) => {
       conductor:        1,
       centro_costo:     1,
       modelo:           1,
+      tiene_foto:       { $cond: [{ $gt: ['$foto_mime', null] }, true, false] },
       _id:              0,
     },
   })
@@ -124,6 +127,22 @@ export const findAll = async ({ matricula, mes, anio } = {}) => {
 
 export const findLastByMatricula = async (matricula) =>
   FuelRecord.findOne({ matricula }).sort({ fecha: -1, _id: -1 }).lean()
+
+export const attachFoto = async (id, buffer, mime) => {
+  const doc = await FuelRecord.findByIdAndUpdate(
+    id,
+    { $set: { foto: buffer, foto_mime: mime } },
+    { new: false }
+  )
+  if (!doc) {
+    const err = new Error('Registro no encontrado')
+    err.code = 404
+    throw err
+  }
+}
+
+export const getFoto = async (id) =>
+  FuelRecord.findById(id).select('foto foto_mime').lean()
 
 export const create = async (data) => {
   const { matricula, fecha, litros, km_actual,

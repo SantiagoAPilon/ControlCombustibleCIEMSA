@@ -125,6 +125,31 @@
 .scan-hint { font-size: 12px; color: #5a7ab0; flex: 1; }
 .scan-error { color: #b71c1c; font-size: 12px; font-weight: 600; margin: 4px 0 0 2px; }
 
+.foto-preview-bar {
+  display: flex; align-items: center; gap: 14px;
+  background: #f0fdf4; border: 1.5px solid #4ade80;
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 6px;
+}
+.foto-thumb {
+  width: 72px; height: 72px; object-fit: cover;
+  border-radius: 6px; border: 1px solid #d1fae5; flex-shrink: 0;
+  cursor: pointer;
+}
+.foto-preview-info { display: flex; flex-direction: column; gap: 6px; }
+.foto-ok { font-size: 12px; font-weight: 700; color: #166534; }
+.btn-quitar-foto {
+  background: none; border: 1px solid #ef4444; color: #ef4444;
+  border-radius: 5px; padding: 3px 10px; font-size: 11px;
+  font-weight: 600; cursor: pointer; width: fit-content;
+}
+.btn-quitar-foto:hover { background: #fef2f2; }
+.btn-foto {
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; padding: 2px 4px; border-radius: 4px;
+  transition: background .15s;
+}
+.btn-foto:hover { background: #dbeafe; }
+
 /* ── Filter bar ────────────────────────────────────────────── */
 .filter-bar {
   background: #fff; border-radius: 12px; padding: 16px 22px;

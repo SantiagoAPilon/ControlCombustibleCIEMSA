@@ -80,3 +80,18 @@ export const scanTicket = (imageFile) => {
   fd.append('image', imageFile)
   return req('/fuel/scan-ticket', { method: 'POST', body: fd })
 }
+
+export const attachTicketFoto = (id, imageFile) => {
+  const fd = new FormData()
+  fd.append('image', imageFile)
+  return req(`/fuel/${id}/foto-ticket`, { method: 'POST', body: fd })
+}
+
+export const fetchTicketFoto = async (id) => {
+  const res = await fetch(BASE + `/fuel/${id}/foto-ticket`, {
+    headers: authHeaders(),
+  })
+  if (!res.ok) throw new Error('No se pudo cargar la imagen')
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}

@@ -1,4 +1,4 @@
-import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga } from '../services/fuel.service.js'
+import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga, doAttachFoto, doGetFoto } from '../services/fuel.service.js'
 import { doScanTicket } from '../services/ticket.service.js'
 
 export const obtenerCargas = async (req, res) => {
@@ -54,5 +54,29 @@ export const escanearTicket = async (req, res) => {
     res.status(200).json(datos)
   } catch (e) {
     res.status(e.code || 500).json({ message: e.message })
+  }
+}
+
+export const adjuntarFoto = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Se requiere una imagen' })
+  }
+  try {
+    await doAttachFoto(req.params.id, req.file.buffer, req.file.mimetype)
+    res.status(200).json({ ok: true })
+  } catch (e) {
+    res.status(e.code || 500).json({ message: e.message })
+  }
+}
+
+export const obtenerFoto = async (req, res) => {
+  try {
+    const doc = await doGetFoto(req.params.id)
+    if (!doc?.foto) return res.status(404).json({ message: 'Este registro no tiene foto de ticket' })
+    res.set('Content-Type', doc.foto_mime)
+    res.set('Cache-Control', 'private, max-age=86400')
+    res.send(doc.foto.buffer ?? doc.foto)
+  } catch (e) {
+    res.status(500).json({ message: e.message })
   }
 }

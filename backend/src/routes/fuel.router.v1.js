@@ -1,6 +1,6 @@
 import express  from 'express'
 import multer   from 'multer'
-import { obtenerCargas, registrarCarga, actualizarCarga, eliminarCarga, escanearTicket } from '../controllers/fuel.controller.js'
+import { obtenerCargas, registrarCarga, actualizarCarga, eliminarCarga, escanearTicket, adjuntarFoto, obtenerFoto } from '../controllers/fuel.controller.js'
 
 const fuelRouterV1 = express.Router()
 
@@ -14,10 +14,13 @@ const upload = multer({
   },
 })
 
-fuelRouterV1.get   ('/fuel',            obtenerCargas)
-fuelRouterV1.post  ('/fuel',            registrarCarga)
-fuelRouterV1.put   ('/fuel/:id',        actualizarCarga)
-fuelRouterV1.delete('/fuel/:id',        eliminarCarga)
-fuelRouterV1.post  ('/fuel/scan-ticket', upload.single('image'), escanearTicket)
+fuelRouterV1.get   ('/fuel',                    obtenerCargas)
+fuelRouterV1.post  ('/fuel',                    registrarCarga)
+// Rutas específicas antes de las parametrizadas
+fuelRouterV1.post  ('/fuel/scan-ticket',         upload.single('image'), escanearTicket)
+fuelRouterV1.post  ('/fuel/:id/foto-ticket',     upload.single('image'), adjuntarFoto)
+fuelRouterV1.get   ('/fuel/:id/foto-ticket',     obtenerFoto)
+fuelRouterV1.put   ('/fuel/:id',                actualizarCarga)
+fuelRouterV1.delete('/fuel/:id',                eliminarCarga)
 
 export { fuelRouterV1 }
