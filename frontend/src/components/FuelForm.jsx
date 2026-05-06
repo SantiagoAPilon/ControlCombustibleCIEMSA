@@ -16,14 +16,26 @@ const emptyForm = () => ({
   costo_total:      '',
 });
 
-export default function FuelForm({ vehicles, onSubmit, loading }) {
-  const [form, setForm]           = useState(emptyForm());
+export default function FuelForm({ vehicles, onSubmit, loading, userRol, userVehiculo }) {
+  const isConductor = userRol === 'conductor';
+
+  const [form, setForm]           = useState(() => ({
+    ...emptyForm(),
+    matricula: isConductor ? (userVehiculo || '') : '',
+  }));
   const [autoTotal, setAutoTotal] = useState(true);
   const [scanning, setScanning]   = useState(false);
   const [scanError, setScanError] = useState('');
   const [fotoFile, setFotoFile]   = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const fileInputRef              = useRef(null);
+
+  // Si cambia el vehículo del conductor (improbable pero defensivo)
+  useEffect(() => {
+    if (isConductor && userVehiculo) {
+      setForm(prev => ({ ...prev, matricula: userVehiculo }));
+    }
+  }, [isConductor, userVehiculo]);
 
   const selectedVehicle = vehicles.find(v => v.matricula === form.matricula);
 
@@ -143,18 +155,29 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
         {/* Matrícula */}
         <div className="form-group">
           <label>Matrícula *</label>
-          <select name="matricula" value={form.matricula} onChange={set} required>
-            <option value="">Seleccionar vehículo…</option>
-            {cc.map(c => (
-              <optgroup key={c} label={`Centro de Costo: ${c}`}>
-                {vehicles.filter(v => v.centro_costo === c).map(v => (
-                  <option key={v.matricula} value={v.matricula}>
-                    {v.matricula} — {v.conductor}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          {isConductor ? (
+            <input
+              type="text"
+              value={selectedVehicle
+                ? `${selectedVehicle.matricula} — ${selectedVehicle.conductor}`
+                : form.matricula}
+              disabled
+              className="input-locked"
+            />
+          ) : (
+            <select name="matricula" value={form.matricula} onChange={set} required>
+              <option value="">Seleccionar vehículo…</option>
+              {cc.map(c => (
+                <optgroup key={c} label={`Centro de Costo: ${c}`}>
+                  {vehicles.filter(v => v.centro_costo === c).map(v => (
+                    <option key={v.matricula} value={v.matricula}>
+                      {v.matricula} — {v.conductor}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          )}
         </div>
 
         {selectedVehicle && (

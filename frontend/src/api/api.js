@@ -95,3 +95,9 @@ export const fetchTicketFoto = async (id) => {
   const blob = await res.blob()
   return URL.createObjectURL(blob)
 }
+
+// Users (admin only)
+export const getUsers    = ()           => req('/users')
+export const addUser     = (data)       => jsonReq('/users', 'POST', data)
+export const updateUser  = (id, data)   => jsonReq(`/users/${id}`, 'PUT', data)
+export const deleteUser  = (id)         => req(`/users/${id}`, { method: 'DELETE' })

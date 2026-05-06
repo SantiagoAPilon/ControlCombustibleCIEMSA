@@ -4,6 +4,7 @@ import FuelForm       from './components/FuelForm'
 import FuelTable      from './components/FuelTable'
 import FilterBar      from './components/FilterBar'
 import AdminVehicles  from './components/AdminVehicles'
+import AdminUsers     from './components/AdminUsers'
 import EditFuelModal  from './components/EditFuelModal'
 import Reports        from './components/Reports'
 import {
@@ -15,20 +16,26 @@ import {
   deleteFuelRecord,
   attachTicketFoto,
   fetchTicketFoto,
+  getUsers,
+  addUser,
+  updateUser,
+  deleteUser,
 } from './api/api'
 import './App.css'
 
 const now = new Date()
 
 export default function App() {
-  const [isAuth,    setIsAuth]    = useState(!!localStorage.getItem('token'))
-  const [userRol,   setUserRol]   = useState(localStorage.getItem('rol') || '')
-  const [activeTab, setActiveTab] = useState('form')
-  const [vehicles,  setVehicles]  = useState([])
-  const [records,   setRecords]   = useState([])
-  const [loading,   setLoading]   = useState(false)
-  const [notify,    setNotify]    = useState(null)
-  const [filters,   setFilters]   = useState({
+  const [isAuth,      setIsAuth]      = useState(!!localStorage.getItem('token'))
+  const [userRol,     setUserRol]     = useState(localStorage.getItem('rol') || '')
+  const [userVehiculo,setUserVehiculo]= useState(localStorage.getItem('vehiculo') || '')
+  const [activeTab,   setActiveTab]   = useState('form')
+  const [adminTab,    setAdminTab]    = useState('vehicles')
+  const [vehicles,    setVehicles]    = useState([])
+  const [records,     setRecords]     = useState([])
+  const [loading,     setLoading]     = useState(false)
+  const [notify,      setNotify]      = useState(null)
+  const [filters,     setFilters]     = useState({
     matricula: 'all',
     anio: now.getFullYear(),
   })
@@ -61,17 +68,23 @@ export default function App() {
 
   const handleLogin = async (credentials) => {
     const data = await apiLogin(credentials)
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('rol', data.rol)
+    localStorage.setItem('token',    data.token)
+    localStorage.setItem('rol',      data.rol)
+    localStorage.setItem('vehiculo', data.vehiculo || '')
     setUserRol(data.rol)
+    setUserVehiculo(data.vehiculo || '')
     setIsAuth(true)
+    // Conductores arrancan en el historial (no tienen tab de nueva carga oculta)
+    setActiveTab(data.rol === 'reportes' ? 'history' : 'form')
   }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('rol')
+    localStorage.removeItem('vehiculo')
     setIsAuth(false)
     setUserRol('')
+    setUserVehiculo('')
     setActiveTab('form')
     setVehicles([])
     setRecords([])
@@ -167,15 +180,19 @@ export default function App() {
       )}
 
       <nav className="tabs">
-        <button className={`tab ${activeTab === 'form'    ? 'active' : ''}`} onClick={() => setActiveTab('form')}>
-          + Nueva Carga
-        </button>
+        {userRol !== 'reportes' && (
+          <button className={`tab ${activeTab === 'form' ? 'active' : ''}`} onClick={() => setActiveTab('form')}>
+            + Nueva Carga
+          </button>
+        )}
         <button className={`tab ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
           Historial
         </button>
-        <button className={`tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
-          Informes
-        </button>
+        {userRol !== 'conductor' && (
+          <button className={`tab ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
+            Informes
+          </button>
+        )}
         {userRol === 'admin' && (
           <button className={`tab ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
             ⚙ Administración
@@ -185,17 +202,53 @@ export default function App() {
 
       <main className="main-content">
         {activeTab === 'form' && (
-          <FuelForm vehicles={vehicles} onSubmit={handleSubmit} loading={loading} />
+          <FuelForm
+            vehicles={vehicles}
+            onSubmit={handleSubmit}
+            loading={loading}
+            userRol={userRol}
+            userVehiculo={userVehiculo}
+          />
         )}
         {activeTab === 'history' && (
           <>
-            <FilterBar vehicles={vehicles} filters={filters} onChange={setFilters} />
-            <FuelTable records={records} loading={loading} onEdit={setEditRecord} onDelete={handleDelete} onVerFoto={handleVerFoto} />
+            <FilterBar
+              vehicles={vehicles}
+              filters={filters}
+              onChange={setFilters}
+              userRol={userRol}
+              userVehiculo={userVehiculo}
+            />
+            <FuelTable
+              records={records}
+              loading={loading}
+              onEdit={userRol === 'reportes' || userRol === 'conductor' ? null : setEditRecord}
+              onDelete={userRol === 'reportes' || userRol === 'conductor' ? null : handleDelete}
+              onVerFoto={handleVerFoto}
+              userRol={userRol}
+            />
           </>
         )}
         {activeTab === 'reports' && <Reports />}
         {activeTab === 'admin' && (
-          <AdminVehicles vehicles={vehicles} onRefresh={loadVehicles} />
+          <div>
+            <div className="admin-tabs">
+              <button
+                className={`admin-tab ${adminTab === 'vehicles' ? 'active' : ''}`}
+                onClick={() => setAdminTab('vehicles')}
+              >
+                Vehículos
+              </button>
+              <button
+                className={`admin-tab ${adminTab === 'users' ? 'active' : ''}`}
+                onClick={() => setAdminTab('users')}
+              >
+                Usuarios
+              </button>
+            </div>
+            {adminTab === 'vehicles' && <AdminVehicles vehicles={vehicles} onRefresh={loadVehicles} />}
+            {adminTab === 'users'    && <AdminUsers vehicles={vehicles} getUsers={getUsers} addUser={addUser} updateUser={updateUser} deleteUser={deleteUser} />}
+          </div>
         )}
       </main>
     </div>

@@ -3,7 +3,10 @@ import { doScanTicket } from '../services/ticket.service.js'
 
 export const obtenerCargas = async (req, res) => {
   try {
-    const cargas = await doObtenerCargas(req.query)
+    // Conductor solo ve sus propios registros
+    const filters = { ...req.query }
+    if (req.user.rol === 'conductor') filters.matricula = req.user.vehiculo
+    const cargas = await doObtenerCargas(filters)
     res.status(200).json(cargas)
   } catch (e) {
     res.status(500).json({ message: e.message })
@@ -15,6 +18,10 @@ export const registrarCarga = async (req, res) => {
   if (!matricula || !fecha || litros == null || km_actual == null) {
     return res.status(400).json({ message: 'Faltan campos obligatorios: matricula, fecha, litros, km_actual' })
   }
+  // Conductor solo puede registrar su propio vehículo
+  if (req.user.rol === 'conductor' && req.body.matricula !== req.user.vehiculo) {
+    return res.status(403).json({ message: 'Solo podés registrar cargas para tu vehículo asignado' })
+  }
   try {
     const carga = await doRegistrarCarga(req.body)
     res.status(201).json(carga)
@@ -24,6 +31,7 @@ export const registrarCarga = async (req, res) => {
 }
 
 export const actualizarCarga = async (req, res) => {
+  if (req.user.rol === 'reportes') return res.status(403).json({ message: 'No tenés permiso para modificar registros' })
   const { fecha, litros, km_actual, tipo_combustible, proveedor, costo_litro, costo_total } = req.body
   if (!fecha || litros == null || km_actual == null) {
     return res.status(400).json({ message: 'Faltan campos obligatorios: fecha, litros, km_actual' })
@@ -37,6 +45,7 @@ export const actualizarCarga = async (req, res) => {
 }
 
 export const eliminarCarga = async (req, res) => {
+  if (req.user.rol === 'reportes') return res.status(403).json({ message: 'No tenés permiso para modificar registros' })
   try {
     await doEliminarCarga(req.params.id)
     res.status(204).send()

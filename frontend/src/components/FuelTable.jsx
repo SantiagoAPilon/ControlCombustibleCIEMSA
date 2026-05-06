@@ -44,7 +44,8 @@ const exportToExcel = (records) => {
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100, 150, 200];
 
-export default function FuelTable({ records, loading, onEdit, onDelete, onVerFoto }) {
+export default function FuelTable({ records, loading, onEdit, onDelete, onVerFoto, userRol }) {
+  const canEdit = !!onEdit && !!onDelete;
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -134,7 +135,7 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
               <th className="r">$/L</th>
               <th className="r">Total $</th>
               <th>Ticket</th>
-              <th></th>
+              {canEdit && <th></th>}
             </tr>
           </thead>
           <tbody>
@@ -162,10 +163,12 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
                     : <span className="muted">—</span>
                   }
                 </td>
-                <td className="actions-cell">
-                  <button className="btn-edit" onClick={() => onEdit(r)} title="Editar">✎</button>
-                  <button className="btn-del"  onClick={() => onDelete(r.id)} title="Eliminar">✕</button>
-                </td>
+                {canEdit && (
+                  <td className="actions-cell">
+                    <button className="btn-edit" onClick={() => onEdit(r)}      title="Editar">✎</button>
+                    <button className="btn-del"  onClick={() => onDelete(r.id)} title="Eliminar">✕</button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

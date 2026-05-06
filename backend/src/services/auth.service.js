@@ -22,9 +22,9 @@ export const doLogin = async ({ usuario, password }) => {
   }
 
   const token = jwt.sign(
-    { usuario: user.usuario, rol: user.rol },
+    { usuario: user.usuario, rol: user.rol, vehiculo: user.vehiculo || null },
     process.env.JWT_SECRET,
     { expiresIn: '8h' }
   )
-  return { token, usuario: user.usuario, rol: user.rol }
+  return { token, usuario: user.usuario, rol: user.rol, vehiculo: user.vehiculo || null }
 }
