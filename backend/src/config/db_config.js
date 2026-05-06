@@ -18,8 +18,8 @@ async function _seedIfEmpty() {
   if (userCount === 0) {
     const seedUsers = [
       { usuario: process.env.ADMIN_USER || 'santiago', password: process.env.ADMIN_PASSWORD || 'santiago', rol: 'admin' },
-      { usuario: 'ososa',    password: 'ososa',    rol: 'usuario' },
-      { usuario: 'atechera', password: 'atechera', rol: 'usuario' },
+      { usuario: 'ososa',    password: 'ososa',    rol: 'reportes' },
+      { usuario: 'atechera', password: 'atechera', rol: 'reportes' },
     ]
     for (const u of seedUsers) {
       const password_hash = await bcrypt.hash(u.password, 10)
@@ -30,7 +30,7 @@ async function _seedIfEmpty() {
 
   const vehicleCount = await Vehicle.countDocuments()
   if (vehicleCount === 0) {
-    await Vehicle.insertMany([
+    const vehicles = [
       { matricula: 'SDE8297', conductor: 'Washington Bossi',        centro_costo: 'OM2204', modelo: 'Nissan Frontier Diesel' },
       { matricula: 'CBC4683', conductor: 'Marcelo Perrox',           centro_costo: 'OM2204', modelo: 'Chevrolet Onix' },
       { matricula: 'CBC4641', conductor: 'Marcos Pascual',           centro_costo: 'OM2204', modelo: 'Renault Oroch' },
@@ -43,7 +43,18 @@ async function _seedIfEmpty() {
       { matricula: 'ABC7658', conductor: 'Jose Saus / Jesus Rivera', centro_costo: 'OM2404', modelo: 'Renault Oroch' },
       { matricula: 'CBC4624', conductor: 'Sergio Cesaro',            centro_costo: 'OM2404', modelo: 'Renault Oroch' },
       { matricula: 'CBC4640', conductor: 'Manuel Martinez',          centro_costo: 'OM2404', modelo: 'Renault Oroch' },
-    ])
+    ]
+    await Vehicle.insertMany(vehicles)
     console.log('Vehículos iniciales creados ✓')
+
+    // Crear un usuario conductor por cada vehículo (contraseña = matrícula en minúscula)
+    for (const v of vehicles) {
+      const existe = await User.exists({ usuario: v.matricula })
+      if (existe) continue
+      const password_hash = await bcrypt.hash(v.matricula.toLowerCase(), 10)
+      await User.create({ usuario: v.matricula, password_hash, rol: 'conductor', vehiculo: v.matricula })
+    }
+    console.log('Usuarios conductores creados ✓')
   }
 }
+
