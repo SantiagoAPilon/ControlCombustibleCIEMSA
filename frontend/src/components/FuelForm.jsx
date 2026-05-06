@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { scanTicket } from '../api/api.js';
 
 const FUEL_TYPES = ['Gasoil', 'Nafta', 'Nafta Premium', 'GNC'];
 
@@ -16,8 +17,11 @@ const emptyForm = () => ({
 });
 
 export default function FuelForm({ vehicles, onSubmit, loading }) {
-  const [form, setForm]       = useState(emptyForm());
+  const [form, setForm]           = useState(emptyForm());
   const [autoTotal, setAutoTotal] = useState(true);
+  const [scanning, setScanning]   = useState(false);
+  const [scanError, setScanError] = useState('');
+  const fileInputRef              = useRef(null);
 
   const selectedVehicle = vehicles.find(v => v.matricula === form.matricula);
 
@@ -33,6 +37,32 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
     const { name, value } = e.target;
     if (name === 'costo_total') setAutoTotal(false);
     setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleScanTicket = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScanError('');
+    setScanning(true);
+    try {
+      const datos = await scanTicket(file);
+      setForm(prev => ({
+        ...prev,
+        ...(datos.fecha            ? { fecha: datos.fecha }                       : {}),
+        ...(datos.litros != null   ? { litros: String(datos.litros) }             : {}),
+        ...(datos.tipo_combustible ? { tipo_combustible: datos.tipo_combustible } : {}),
+        ...(datos.proveedor        ? { proveedor: datos.proveedor }               : {}),
+        ...(datos.costo_litro != null ? { costo_litro: String(datos.costo_litro) } : {}),
+        ...(datos.costo_total != null ? { costo_total: String(datos.costo_total) } : {}),
+      }));
+      if (datos.costo_total != null) setAutoTotal(false);
+    } catch (err) {
+      setScanError(err.message || 'Error al procesar el ticket');
+    } finally {
+      setScanning(false);
+      // Limpiar el input para permitir escanear el mismo archivo nuevamente
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = (e) => {
@@ -56,6 +86,31 @@ export default function FuelForm({ vehicles, onSubmit, loading }) {
   return (
     <div className="form-card">
       <h2>Registrar Carga de Combustible</h2>
+
+      {/* Escaneo de ticket */}
+      <div className="scan-ticket-bar">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          capture="environment"
+          style={{ display: 'none' }}
+          onChange={handleScanTicket}
+        />
+        <button
+          type="button"
+          className="btn-scan"
+          disabled={scanning}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {scanning ? 'Leyendo ticket…' : 'Leer ticket con IA'}
+        </button>
+        <span className="scan-hint">
+          Sacá una foto al ticket y se completarán los campos automáticamente (excepto KM)
+        </span>
+      </div>
+      {scanError && <p className="scan-error">{scanError}</p>}
+
       <form onSubmit={handleSubmit} className="fuel-form">
 
         {/* Matrícula */}

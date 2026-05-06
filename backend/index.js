@@ -1,6 +1,9 @@
 import 'dotenv/config'
-import express from 'express'
-import cors    from 'cors'
+import express       from 'express'
+import cors          from 'cors'
+import helmet        from 'helmet'
+import rateLimit     from 'express-rate-limit'
+import mongoSanitize from 'express-mongo-sanitize'
 import { authRouterV1 }     from './src/routes/auth.router.v1.js'
 import { vehiclesRouterV1 } from './src/routes/vehicles.router.v1.js'
 import { fuelRouterV1 }     from './src/routes/fuel.router.v1.js'
@@ -12,6 +15,10 @@ import { conectarBD }       from './src/config/db_config.js'
 const app  = express()
 const PORT = process.env.PORT || 8001
 
+// Seguridad HTTP (14 cabeceras defensivas)
+app.use(helmet())
+
+// CORS restringido al frontend conocido
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:8000').split(',').map(s => s.trim())
 app.use(cors({
   origin: (origin, cb) => {
@@ -19,7 +26,21 @@ app.use(cors({
     else cb(new Error('CORS: origen no permitido'))
   },
 }))
-app.use(express.json())
+
+// Rate limiting global: 100 req / 15 min por IP
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Demasiadas solicitudes, intente más tarde' },
+}))
+
+app.use(express.json({ limit: '1mb' }))
+
+// Elimina operadores $ y . del body/params para prevenir inyección NoSQL
+app.use(mongoSanitize())
+
 app.use(logMiddleware)
 
 // Ruta pública

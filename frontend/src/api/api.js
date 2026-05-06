@@ -73,3 +73,10 @@ export const getHeatmap = ({ meses, hasta } = {}) => {
   if (hasta) p.set('hasta', hasta)
   return req(`/reports/heatmap?${p}`)
 }
+
+// Ticket scanning
+export const scanTicket = (imageFile) => {
+  const fd = new FormData()
+  fd.append('image', imageFile)
+  return req('/fuel/scan-ticket', { method: 'POST', body: fd })
+}

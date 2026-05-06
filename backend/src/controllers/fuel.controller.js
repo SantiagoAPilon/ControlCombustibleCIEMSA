@@ -1,4 +1,5 @@
 import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga } from '../services/fuel.service.js'
+import { doScanTicket } from '../services/ticket.service.js'
 
 export const obtenerCargas = async (req, res) => {
   try {
@@ -41,5 +42,17 @@ export const eliminarCarga = async (req, res) => {
     res.status(204).send()
   } catch (e) {
     res.status(500).json({ message: e.message })
+  }
+}
+
+export const escanearTicket = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Se requiere una imagen del ticket' })
+  }
+  try {
+    const datos = await doScanTicket(req.file.buffer, req.file.mimetype)
+    res.status(200).json(datos)
+  } catch (e) {
+    res.status(e.code || 500).json({ message: e.message })
   }
 }
