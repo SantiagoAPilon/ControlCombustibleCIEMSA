@@ -11,8 +11,18 @@ export async function conectarBD() {
 }
 
 async function _seedIfEmpty() {
-  const { User }    = await import('../modelos/user.model.js')
-  const { Vehicle } = await import('../modelos/vehicle.model.js')
+  const { User }        = await import('../modelos/user.model.js')
+  const { Vehicle }     = await import('../modelos/vehicle.model.js')
+  const { CentroCosto } = await import('../modelos/cost_center.model.js')
+
+  const ccCount = await CentroCosto.countDocuments()
+  if (ccCount === 0) {
+    await CentroCosto.insertMany([
+      { codigo: 'OM2204', nombre: 'Obras y Mantenimiento 2204' },
+      { codigo: 'OM2404', nombre: 'Obras y Mantenimiento 2404' },
+    ])
+    console.log('Centros de costo iniciales creados ✓')
+  }
 
   const userCount = await User.countDocuments()
   if (userCount === 0) {

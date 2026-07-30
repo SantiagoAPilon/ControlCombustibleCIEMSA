@@ -1,4 +1,4 @@
-import { getHeatmapData, getAllVehiclesForReport } from '../modelos/reports.model.js'
+import { getHeatmapData, getAllVehiclesForReport, getAnomaliesData } from '../modelos/reports.model.js'
 
 export const doGetHeatmap = async ({ meses = 12, hasta }) => {
   const hastaDate = hasta ? new Date(hasta) : new Date()
@@ -45,3 +45,5 @@ export const doGetHeatmap = async ({ meses = 12, hasta }) => {
 
   return { months, vehicles: result, desde, hasta: h }
 }
+
+export const doGetAnomalias = ({ dias }) => getAnomaliesData({ dias })

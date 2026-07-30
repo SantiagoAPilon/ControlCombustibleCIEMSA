@@ -9,6 +9,7 @@ import { vehiclesRouterV1 } from './src/routes/vehicles.router.v1.js'
 import { fuelRouterV1 }     from './src/routes/fuel.router.v1.js'
 import { reportsRouterV1 }  from './src/routes/reports.router.v1.js'
 import { usersRouterV1 }    from './src/routes/users.router.v1.js'
+import { ccRouterV1 }       from './src/routes/cost_centers.router.v1.js'
 import { logMiddleware }    from './src/middlewares/logger.middleware.js'
 import { authMiddleware }   from './src/middlewares/auth.middleware.js'
 import { conectarBD }       from './src/config/db_config.js'
@@ -53,6 +54,7 @@ app.use('/v1', vehiclesRouterV1)
 app.use('/v1', fuelRouterV1)
 app.use('/v1', reportsRouterV1)
 app.use('/v1', usersRouterV1)
+app.use('/v1', ccRouterV1)
 
 conectarBD()
   .then(() => app.listen(PORT, () => console.log(`Backend CIEMSA → http://localhost:${PORT}`)))

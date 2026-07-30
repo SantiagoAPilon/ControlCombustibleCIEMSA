@@ -2,19 +2,21 @@ import mongoose    from 'mongoose'
 import { FuelRecord } from './fuel.model.js'
 
 const vehicleSchema = new mongoose.Schema({
-  matricula:    { type: String, unique: true, required: true, uppercase: true, trim: true },
-  conductor:    String,
-  centro_costo: String,
-  modelo:       String,
+  matricula:          { type: String, unique: true, required: true, uppercase: true, trim: true },
+  conductor:          String,
+  centro_costo:       String,
+  modelo:             String,
+  km_proximo_service: { type: Number, default: null },
 })
 
 export const Vehicle = mongoose.model('Vehicle', vehicleSchema)
 
 const toObj = (v) => ({
-  matricula:    v.matricula,
-  conductor:    v.conductor,
-  centro_costo: v.centro_costo,
-  modelo:       v.modelo,
+  matricula:          v.matricula,
+  conductor:          v.conductor,
+  centro_costo:       v.centro_costo,
+  modelo:             v.modelo,
+  km_proximo_service: v.km_proximo_service ?? null,
 })
 
 export const findAll = async () => {
@@ -37,10 +39,10 @@ export const create = async ({ matricula, conductor, centro_costo, modelo }) => 
   }
 }
 
-export const update = async (matricula, { conductor, centro_costo, modelo }) => {
+export const update = async (matricula, { conductor, centro_costo, modelo, km_proximo_service }) => {
   const doc = await Vehicle.findOneAndUpdate(
     { matricula },
-    { conductor, centro_costo, modelo },
+    { conductor, centro_costo, modelo, km_proximo_service: km_proximo_service ?? null },
     { new: true }
   ).lean()
   return toObj(doc)
@@ -54,4 +56,12 @@ export const remove = async (matricula) => {
     throw e
   }
   return Vehicle.deleteOne({ matricula })
+}
+
+export const getLastKm = async (matricula) => {
+  const doc = await FuelRecord.findOne({ matricula, km_actual: { $ne: null } })
+    .sort({ fecha: -1, _id: -1 })
+    .select('km_actual fecha')
+    .lean()
+  return doc ? { km_actual: doc.km_actual, fecha: doc.fecha } : null
 }
