@@ -16,7 +16,7 @@ const consumoClass = (v) => {
   return 'low';
 };
 
-const exportToExcel = (records) => {
+const exportToExcel = (records, verDatosSensibles) => {
   const rows = records.map(r => ({
     'Fecha':           fmtDate(r.fecha),
     'Matrícula':       r.matricula,
@@ -29,9 +29,11 @@ const exportToExcel = (records) => {
     'KM Recorridos':   r.km_recorridos ?? '',
     'km/L':            r.consumo_km_l ?? '',
     'Tipo':            r.tipo_combustible ?? '',
-    'Proveedor':       r.proveedor ?? '',
-    '$/L':             r.costo_litro ?? '',
-    'Total $':         r.costo_total ?? '',
+    ...(verDatosSensibles ? {
+      'Proveedor': r.proveedor ?? '',
+      '$/L':       r.costo_litro ?? '',
+      'Total $':   r.costo_total ?? '',
+    } : {}),
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
@@ -46,6 +48,8 @@ const PAGE_SIZE_OPTIONS = [20, 50, 100, 150, 200];
 
 export default function FuelTable({ records, loading, onEdit, onDelete, onVerFoto, userRol }) {
   const canEdit = !!onEdit && !!onDelete;
+  // El conductor ve solo datos básicos + consumo, sin costos ni proveedor
+  const verDatosSensibles = userRol !== 'conductor';
   const [page, setPage]         = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -96,7 +100,7 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
           <span className="stat-label">Total Litros</span>
           <span className="stat-value">{fmtNum(totalLitros)} L</span>
         </div>
-        {totalCosto > 0 && (
+        {verDatosSensibles && totalCosto > 0 && (
           <div className="stat-card">
             <span className="stat-label">Gasto Total</span>
             <span className="stat-value">${fmtNum(totalCosto)}</span>
@@ -110,7 +114,7 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
             </span>
           </div>
         )}
-        <button className="btn-excel" onClick={() => exportToExcel(records)}>
+        <button className="btn-excel" onClick={() => exportToExcel(records, verDatosSensibles)}>
           ⬇ Descargar Excel
         </button>
       </div>
@@ -131,9 +135,9 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
               <th className="r">KM Recorr.</th>
               <th className="r">km/L</th>
               <th>Tipo</th>
-              <th>Proveedor</th>
-              <th className="r">$/L</th>
-              <th className="r">Total $</th>
+              {verDatosSensibles && <th>Proveedor</th>}
+              {verDatosSensibles && <th className="r">$/L</th>}
+              {verDatosSensibles && <th className="r">Total $</th>}
               <th>Ticket</th>
               {canEdit && <th></th>}
             </tr>
@@ -154,9 +158,9 @@ export default function FuelTable({ records, loading, onEdit, onDelete, onVerFot
                   {r.consumo_km_l != null ? fmtNum(r.consumo_km_l) : '—'}
                 </td>
                 <td className="muted">{r.tipo_combustible || '—'}</td>
-                <td className="muted">{r.proveedor || '—'}</td>
-                <td className="r muted">{r.costo_litro != null ? `$${fmtNum(r.costo_litro)}` : '—'}</td>
-                <td className="r">{r.costo_total != null ? `$${fmtNum(r.costo_total)}` : '—'}</td>
+                {verDatosSensibles && <td className="muted">{r.proveedor || '—'}</td>}
+                {verDatosSensibles && <td className="r muted">{r.costo_litro != null ? `$${fmtNum(r.costo_litro)}` : '—'}</td>}
+                {verDatosSensibles && <td className="r">{r.costo_total != null ? `$${fmtNum(r.costo_total)}` : '—'}</td>}
                 <td className="tc">
                   {r.tiene_foto
                     ? <button className="btn-foto" onClick={() => onVerFoto(r.id)} title="Ver foto del ticket">📷</button>

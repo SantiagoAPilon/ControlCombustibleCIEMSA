@@ -12,12 +12,16 @@ const verificarPropioVehiculo = async (req, res) => {
   return true
 }
 
+// El conductor solo ve datos básicos + consumo, sin información de costos ni proveedor
+const ocultarDatosSensibles = ({ costo_litro, costo_total, proveedor, ...resto }) => resto
+
 export const obtenerCargas = async (req, res) => {
   try {
     // Conductor solo ve sus propios registros
     const filters = { ...req.query }
     if (req.user.rol === 'conductor') filters.matricula = req.user.vehiculo
-    const cargas = await doObtenerCargas(filters)
+    let cargas = await doObtenerCargas(filters)
+    if (req.user.rol === 'conductor') cargas = cargas.map(ocultarDatosSensibles)
     res.status(200).json(cargas)
   } catch (e) {
     res.status(500).json({ message: e.message })
