@@ -1,4 +1,4 @@
-import { findAll, findLastByMatricula, create, update, remove, attachFoto, getFoto } from '../modelos/fuel.model.js'
+import { findAll, findLastByMatricula, create, update, remove, attachFoto, getFoto, findMatriculaById } from '../modelos/fuel.model.js'
 
 export const doObtenerCargas = (filters) => findAll(filters)
 
@@ -22,3 +22,5 @@ export const doEliminarCarga = (id) => remove(id)
 export const doAttachFoto = (id, buffer, mime) => attachFoto(id, buffer, mime)
 
 export const doGetFoto = (id) => getFoto(id)
+
+export const doGetMatriculaById = (id) => findMatriculaById(id)

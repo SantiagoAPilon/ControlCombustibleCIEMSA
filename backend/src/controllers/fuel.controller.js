@@ -1,5 +1,16 @@
-import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga, doAttachFoto, doGetFoto } from '../services/fuel.service.js'
+import { doObtenerCargas, doRegistrarCarga, doActualizarCarga, doEliminarCarga, doAttachFoto, doGetFoto, doGetMatriculaById } from '../services/fuel.service.js'
 import { doScanTicket } from '../services/ticket.service.js'
+
+// Conductor solo puede operar sobre registros de su propio vehículo asignado
+const verificarPropioVehiculo = async (req, res) => {
+  if (req.user.rol !== 'conductor') return true
+  const matricula = await doGetMatriculaById(req.params.id)
+  if (matricula !== req.user.vehiculo) {
+    res.status(403).json({ message: 'Solo podés operar sobre cargas de tu vehículo asignado' })
+    return false
+  }
+  return true
+}
 
 export const obtenerCargas = async (req, res) => {
   try {
@@ -37,6 +48,7 @@ export const actualizarCarga = async (req, res) => {
     return res.status(400).json({ message: 'Faltan campos obligatorios: fecha, litros, km_actual' })
   }
   try {
+    if (!(await verificarPropioVehiculo(req, res))) return
     const carga = await doActualizarCarga(req.params.id, { fecha, litros, km_actual, tipo_combustible, proveedor, costo_litro, costo_total })
     res.status(200).json(carga)
   } catch (e) {
@@ -47,6 +59,7 @@ export const actualizarCarga = async (req, res) => {
 export const eliminarCarga = async (req, res) => {
   if (req.user.rol === 'reportes') return res.status(403).json({ message: 'No tenés permiso para modificar registros' })
   try {
+    if (!(await verificarPropioVehiculo(req, res))) return
     await doEliminarCarga(req.params.id)
     res.status(204).send()
   } catch (e) {
@@ -71,6 +84,7 @@ export const adjuntarFoto = async (req, res) => {
     return res.status(400).json({ message: 'Se requiere una imagen' })
   }
   try {
+    if (!(await verificarPropioVehiculo(req, res))) return
     await doAttachFoto(req.params.id, req.file.buffer, req.file.mimetype)
     res.status(200).json({ ok: true })
   } catch (e) {
@@ -80,6 +94,7 @@ export const adjuntarFoto = async (req, res) => {
 
 export const obtenerFoto = async (req, res) => {
   try {
+    if (!(await verificarPropioVehiculo(req, res))) return
     const doc = await doGetFoto(req.params.id)
     if (!doc?.foto) return res.status(404).json({ message: 'Este registro no tiene foto de ticket' })
     res.set('Content-Type', doc.foto_mime)

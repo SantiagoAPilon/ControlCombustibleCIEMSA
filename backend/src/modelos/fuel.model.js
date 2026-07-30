@@ -144,6 +144,11 @@ export const attachFoto = async (id, buffer, mime) => {
 export const getFoto = async (id) =>
   FuelRecord.findById(id).select('foto foto_mime').lean()
 
+export const findMatriculaById = async (id) => {
+  const doc = await FuelRecord.findById(id).select('matricula').lean()
+  return doc?.matricula ?? null
+}
+
 export const create = async (data) => {
   const { matricula, fecha, litros, km_actual,
           km_anterior, km_recorridos, consumo_km_l,
