@@ -1,8 +1,7 @@
 const thisYear  = new Date().getFullYear();
 const yearRange = Array.from({ length: 5 }, (_, i) => thisYear - i);
-const CC        = ['OM2204', 'OM2404'];
 
-export default function FilterBar({ vehicles, filters, onChange, userRol, userVehiculo }) {
+export default function FilterBar({ vehicles, filters, onChange, userRol, userVehiculo, costCenters = [] }) {
   const isConductor = userRol === 'conductor';
   const set = (field) => (e) =>
     onChange(prev => ({ ...prev, [field]: e.target.value }));
@@ -31,15 +30,22 @@ export default function FilterBar({ vehicles, filters, onChange, userRol, userVe
           <label>Vehículo</label>
           <select value={filters.matricula} onChange={set('matricula')}>
             <option value="all">Todos los vehículos</option>
-            {CC.map(c => (
-              <optgroup key={c} label={`CC: ${c}`}>
-                {vehicles.filter(v => v.centro_costo === c).map(v => (
+            {costCenters.length > 0
+              ? costCenters.map(cc => (
+                  <optgroup key={cc.codigo} label={`CC: ${cc.codigo}`}>
+                    {vehicles.filter(v => v.centro_costo === cc.codigo).map(v => (
+                      <option key={v.matricula} value={v.matricula}>
+                        {v.matricula} — {v.conductor}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))
+              : vehicles.map(v => (
                   <option key={v.matricula} value={v.matricula}>
                     {v.matricula} — {v.conductor}
                   </option>
-                ))}
-              </optgroup>
-            ))}
+                ))
+            }
           </select>
         </div>
       )}

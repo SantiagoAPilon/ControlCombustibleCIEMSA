@@ -16,7 +16,7 @@ const emptyForm = () => ({
   costo_total:      '',
 });
 
-export default function FuelForm({ vehicles, onSubmit, loading, userRol, userVehiculo }) {
+export default function FuelForm({ vehicles, onSubmit, loading, userRol, userVehiculo, costCenters = [] }) {
   const isConductor = userRol === 'conductor';
 
   const [form, setForm]           = useState(() => ({
@@ -109,7 +109,7 @@ export default function FuelForm({ vehicles, onSubmit, loading, userRol, userVeh
     quitarFoto();
   };
 
-  const cc = ['OM2204', 'OM2404'];
+  const cc = costCenters.length > 0 ? costCenters.map(c => c.codigo) : [];
 
   return (
     <div className="form-card">

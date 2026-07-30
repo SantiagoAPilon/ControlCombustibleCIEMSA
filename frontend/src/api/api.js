@@ -101,3 +101,19 @@ export const getUsers    = ()           => req('/users')
 export const addUser     = (data)       => jsonReq('/users', 'POST', data)
 export const updateUser  = (id, data)   => jsonReq(`/users/${id}`, 'PUT', data)
 export const deleteUser  = (id)         => req(`/users/${id}`, { method: 'DELETE' })
+
+// Cost centers
+export const getCostCenters    = ()           => req('/cost-centers')
+export const addCostCenter     = (data)       => jsonReq('/cost-centers', 'POST', data)
+export const updateCostCenter  = (id, data)   => jsonReq(`/cost-centers/${id}`, 'PUT', data)
+export const deleteCostCenter  = (id)         => req(`/cost-centers/${id}`, { method: 'DELETE' })
+
+// Last KM for a vehicle
+export const getLastKm = (matricula) => req(`/vehicles/${matricula}/last-km`)
+
+// Anomaly report
+export const getAnomalias = ({ dias } = {}) => {
+  const p = new URLSearchParams()
+  if (dias) p.set('dias', dias)
+  return req(`/reports/anomalias?${p}`)
+}

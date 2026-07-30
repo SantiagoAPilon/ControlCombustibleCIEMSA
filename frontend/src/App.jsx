@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import Login          from './components/Login'
-import FuelForm       from './components/FuelForm'
-import FuelTable      from './components/FuelTable'
-import FilterBar      from './components/FilterBar'
-import AdminVehicles  from './components/AdminVehicles'
-import AdminUsers     from './components/AdminUsers'
-import EditFuelModal  from './components/EditFuelModal'
-import Reports        from './components/Reports'
+import Login              from './components/Login'
+import FuelForm           from './components/FuelForm'
+import QuickFuelForm      from './components/QuickFuelForm'
+import FuelTable          from './components/FuelTable'
+import FilterBar          from './components/FilterBar'
+import AdminVehicles      from './components/AdminVehicles'
+import AdminUsers         from './components/AdminUsers'
+import AdminCostCenters   from './components/AdminCostCenters'
+import EditFuelModal      from './components/EditFuelModal'
+import Reports            from './components/Reports'
 import {
   login as apiLogin,
   getVehicles,
@@ -20,37 +22,41 @@ import {
   addUser,
   updateUser,
   deleteUser,
+  getCostCenters,
 } from './api/api'
 import './App.css'
 
 const now = new Date()
 
 export default function App() {
-  const [isAuth,      setIsAuth]      = useState(!!localStorage.getItem('token'))
-  const [userRol,     setUserRol]     = useState(localStorage.getItem('rol') || '')
-  const [userVehiculo,setUserVehiculo]= useState(localStorage.getItem('vehiculo') || '')
-  const [activeTab,   setActiveTab]   = useState('form')
-  const [adminTab,    setAdminTab]    = useState('vehicles')
-  const [vehicles,    setVehicles]    = useState([])
-  const [records,     setRecords]     = useState([])
-  const [loading,     setLoading]     = useState(false)
-  const [notify,      setNotify]      = useState(null)
-  const [filters,     setFilters]     = useState({
+  const [isAuth,       setIsAuth]       = useState(!!localStorage.getItem('token'))
+  const [userRol,      setUserRol]      = useState(localStorage.getItem('rol') || '')
+  const [userVehiculo, setUserVehiculo] = useState(localStorage.getItem('vehiculo') || '')
+  const [activeTab,    setActiveTab]    = useState('form')
+  const [adminTab,     setAdminTab]     = useState('vehicles')
+  const [vehicles,     setVehicles]     = useState([])
+  const [costCenters,  setCostCenters]  = useState([])
+  const [records,      setRecords]      = useState([])
+  const [loading,      setLoading]      = useState(false)
+  const [notify,       setNotify]       = useState(null)
+  const [filters,      setFilters]      = useState({
     matricula: 'all',
     anio: now.getFullYear(),
   })
   const [editRecord, setEditRecord] = useState(null)
 
-  // Carga vehículos al autenticarse
   useEffect(() => {
     if (!isAuth) return
     loadVehicles()
+    loadCostCenters()
   }, [isAuth])
 
-  const loadVehicles = () =>
+  const loadVehicles     = () =>
     getVehicles().then(setVehicles).catch(() => flash('Error al cargar vehículos', 'error'))
 
-  // Carga registros al cambiar filtros o tab
+  const loadCostCenters  = () =>
+    getCostCenters().then(setCostCenters).catch(() => {})
+
   const { matricula, anio } = filters
   useEffect(() => {
     if (!isAuth || activeTab !== 'history') return
@@ -74,7 +80,6 @@ export default function App() {
     setUserRol(data.rol)
     setUserVehiculo(data.vehiculo || '')
     setIsAuth(true)
-    // Conductores arrancan en el historial (no tienen tab de nueva carga oculta)
     setActiveTab(data.rol === 'reportes' ? 'history' : 'form')
   }
 
@@ -87,6 +92,7 @@ export default function App() {
     setUserVehiculo('')
     setActiveTab('form')
     setVehicles([])
+    setCostCenters([])
     setRecords([])
   }
 
@@ -150,7 +156,7 @@ export default function App() {
 
   if (!isAuth) return <Login onLogin={handleLogin} />
 
-
+  const currentVehicle = vehicles.find(v => v.matricula === userVehiculo)
 
   return (
     <div className="app">
@@ -202,13 +208,22 @@ export default function App() {
 
       <main className="main-content">
         {activeTab === 'form' && (
-          <FuelForm
-            vehicles={vehicles}
-            onSubmit={handleSubmit}
-            loading={loading}
-            userRol={userRol}
-            userVehiculo={userVehiculo}
-          />
+          userRol === 'conductor' ? (
+            <QuickFuelForm
+              vehicle={currentVehicle}
+              onSubmit={handleSubmit}
+              loading={loading}
+            />
+          ) : (
+            <FuelForm
+              vehicles={vehicles}
+              onSubmit={handleSubmit}
+              loading={loading}
+              userRol={userRol}
+              userVehiculo={userVehiculo}
+              costCenters={costCenters}
+            />
+          )
         )}
         {activeTab === 'history' && (
           <>
@@ -218,6 +233,7 @@ export default function App() {
               onChange={setFilters}
               userRol={userRol}
               userVehiculo={userVehiculo}
+              costCenters={costCenters}
             />
             <FuelTable
               records={records}
@@ -229,7 +245,7 @@ export default function App() {
             />
           </>
         )}
-        {activeTab === 'reports' && <Reports />}
+        {activeTab === 'reports' && <Reports userRol={userRol} />}
         {activeTab === 'admin' && (
           <div>
             <div className="admin-tabs">
@@ -245,9 +261,35 @@ export default function App() {
               >
                 Usuarios
               </button>
+              <button
+                className={`admin-tab ${adminTab === 'costcenters' ? 'active' : ''}`}
+                onClick={() => setAdminTab('costcenters')}
+              >
+                Centros de Costo
+              </button>
             </div>
-            {adminTab === 'vehicles' && <AdminVehicles vehicles={vehicles} onRefresh={loadVehicles} />}
-            {adminTab === 'users'    && <AdminUsers vehicles={vehicles} getUsers={getUsers} addUser={addUser} updateUser={updateUser} deleteUser={deleteUser} />}
+            {adminTab === 'vehicles' && (
+              <AdminVehicles
+                vehicles={vehicles}
+                onRefresh={loadVehicles}
+                costCenters={costCenters}
+              />
+            )}
+            {adminTab === 'users' && (
+              <AdminUsers
+                vehicles={vehicles}
+                getUsers={getUsers}
+                addUser={addUser}
+                updateUser={updateUser}
+                deleteUser={deleteUser}
+              />
+            )}
+            {adminTab === 'costcenters' && (
+              <AdminCostCenters
+                costCenters={costCenters}
+                onRefresh={loadCostCenters}
+              />
+            )}
           </div>
         )}
       </main>

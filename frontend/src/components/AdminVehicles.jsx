@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { addVehicle, updateVehicle, deleteVehicle } from '../api/api'
 
-const CC_OPTIONS  = ['OM2204', 'OM2404']
-const emptyForm   = () => ({ matricula: '', conductor: '', centro_costo: 'OM2204', modelo: '' })
+const emptyForm = (firstCC = '') => ({ matricula: '', conductor: '', centro_costo: firstCC, modelo: '', km_proximo_service: '' })
 
-export default function AdminVehicles({ vehicles, onRefresh }) {
-  const [form,    setForm]    = useState(emptyForm())
+export default function AdminVehicles({ vehicles, onRefresh, costCenters = [] }) {
+  const CC_OPTIONS = costCenters.map(cc => cc.codigo)
+  const [form,    setForm]    = useState(emptyForm(CC_OPTIONS[0] || ''))
   const [editing, setEditing] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
@@ -21,18 +21,23 @@ export default function AdminVehicles({ vehicles, onRefresh }) {
 
   const startEdit = (v) => {
     setEditing(v.matricula)
-    setForm({ matricula: v.matricula, conductor: v.conductor, centro_costo: v.centro_costo, modelo: v.modelo })
+    setForm({ matricula: v.matricula, conductor: v.conductor, centro_costo: v.centro_costo, modelo: v.modelo, km_proximo_service: v.km_proximo_service ?? '' })
     setError(null)
   }
 
-  const cancelEdit = () => { setEditing(null); setForm(emptyForm()); setError(null) }
+  const cancelEdit = () => { setEditing(null); setForm(emptyForm(CC_OPTIONS[0] || '')); setError(null) }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
       if (editing) {
-        await updateVehicle(editing, { conductor: form.conductor, centro_costo: form.centro_costo, modelo: form.modelo })
+        await updateVehicle(editing, {
+          conductor: form.conductor,
+          centro_costo: form.centro_costo,
+          modelo: form.modelo,
+          km_proximo_service: form.km_proximo_service ? parseInt(form.km_proximo_service, 10) : null,
+        })
         flash(`Vehículo ${editing} actualizado`)
       } else {
         await addVehicle(form)
@@ -78,17 +83,21 @@ export default function AdminVehicles({ vehicles, onRefresh }) {
                   <th>Matrícula</th>
                   <th>Conductor</th>
                   <th>Modelo</th>
+                  <th className="r">Próx. Service (km)</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
                 {byCC(cc).length === 0 ? (
-                  <tr><td colSpan={4} className="muted" style={{ padding: '14px', textAlign: 'center' }}>Sin vehículos</td></tr>
+                  <tr><td colSpan={5} className="muted" style={{ padding: '14px', textAlign: 'center' }}>Sin vehículos</td></tr>
                 ) : byCC(cc).map(v => (
                   <tr key={v.matricula} className={editing === v.matricula ? 'row-editing' : ''}>
                     <td><span className="badge">{v.matricula}</span></td>
                     <td>{v.conductor}</td>
                     <td className="muted">{v.modelo}</td>
+                    <td className="r muted">
+                      {v.km_proximo_service ? v.km_proximo_service.toLocaleString('es-AR') : '—'}
+                    </td>
                     <td style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                       <button className="btn-edit" onClick={() => startEdit(v)}>✎</button>
                       <button className="btn-del"  onClick={() => handleDelete(v)}>✕</button>
@@ -134,6 +143,15 @@ export default function AdminVehicles({ vehicles, onRefresh }) {
               <input
                 type="text" name="modelo" value={form.modelo} onChange={set}
                 required placeholder="Ej: Renault Oroch Diesel"
+              />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Próximo Service (km)</label>
+              <input
+                type="number" name="km_proximo_service" value={form.km_proximo_service} onChange={set}
+                min="0" placeholder="Ej: 50000 (dejar vacío si no aplica)"
               />
             </div>
           </div>
