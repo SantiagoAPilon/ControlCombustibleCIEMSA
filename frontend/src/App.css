@@ -402,3 +402,70 @@
 }
 .hm-tooltip strong { font-size: 13px; display: block; margin-bottom: 4px; }
 .tt-muted { color: #94a3b8; }
+
+/* ── Responsive mobile ──────────────────────────────────────── */
+@media (max-width: 640px) {
+
+  /* Header */
+  .app-header { padding: 10px 14px; }
+  .header-title h1 { font-size: 15px; }
+  .header-icon { font-size: 18px; }
+  .company-badge { font-size: 12px; padding: 3px 9px; letter-spacing: 1px; }
+  .btn-logout { font-size: 12px; padding: 4px 10px; }
+
+  /* Tabs */
+  .tabs { padding: 0 8px; gap: 0; overflow-x: auto; }
+  .tab  { padding: 11px 12px; font-size: 12px; white-space: nowrap; }
+
+  /* Main */
+  .main-content { padding: 0 12px; margin: 14px auto; }
+
+  /* Form */
+  .form-card { padding: 18px 14px; }
+  .form-row  { grid-template-columns: 1fr; gap: 14px; }
+  .btn-primary { width: 100%; }
+
+  /* Filter bar */
+  .filter-bar { padding: 12px 14px; gap: 12px; }
+  .filter-group select { min-width: unset; width: 100%; }
+  .filter-group { width: 100%; }
+
+  /* Stats */
+  .stats-row { gap: 10px; }
+  .stat-card { min-width: calc(50% - 5px); flex: 1; padding: 11px 14px; }
+  .stat-value { font-size: 18px; }
+  .btn-excel { width: 100%; margin-left: 0; justify-content: center; }
+
+  /* Tabla: scroll horizontal ya funciona, solo ajustamos wrapper */
+  .table-wrapper { border-radius: 8px; }
+  .fuel-table { font-size: 12px; }
+  .fuel-table thead th,
+  .fuel-table tbody td { padding: 8px 8px; }
+
+  /* Paginación */
+  .pagination {
+    flex-direction: column; align-items: center;
+    gap: 10px; padding: 12px 14px;
+  }
+  .pagination-info { order: 3; font-size: 12px; }
+  .pagination-controls { order: 1; }
+  .pagination-size { order: 2; }
+  .pg-btn { min-width: 32px; height: 32px; font-size: 12px; }
+
+  /* Login */
+  .login-card { padding: 28px 18px; }
+
+  /* Modal */
+  .modal { padding: 20px 16px; }
+
+  /* Admin */
+  .admin-form-card { padding: 16px 14px; }
+  .admin-actions { flex-direction: column; }
+  .btn-secondary { width: 100%; }
+
+  /* Notificación */
+  .notification { right: 12px; left: 12px; text-align: center; }
+
+  /* Estado vacío */
+  .state-msg { padding: 40px 20px; }
+}
